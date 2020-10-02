@@ -15,6 +15,5 @@ script:
   - pytest --cov= src/
   
 after_success:
-  - codecov --token=1a78cb74-6d5a-4f30-af21-469d1e99776e
-  - bash <(curl -s https://codecov.io/bash)
+  - bash <(curl -s https://codecov.io/bash) -t 1a78cb74-6d5a-4f30-af21-469d1e99776e
   

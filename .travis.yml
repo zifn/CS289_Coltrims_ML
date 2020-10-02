@@ -1,0 +1,20 @@
+language: python
+
+python:
+  - "3.8"
+
+# command to install dependencies
+install:
+  - "pip install --upgrade pip setuptools wheel"
+  - "pip install -r requirements.txt"
+  - "pip install pylint"
+
+# command to run tests: python -m unittest discover
+script: 
+  - pylint src/
+  - pytest --cov= src/
+  
+after_success:
+  - codecov --token=1a78cb74-6d5a-4f30-af21-469d1e99776e
+  - bash <(curl -s https://codecov.io/bash)
+  

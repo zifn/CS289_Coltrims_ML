@@ -8,11 +8,13 @@ install:
   - "pip install --upgrade pip setuptools wheel"
   - "pip install -r requirements.txt"
   - "pip install pylint"
+  - "pip uninstall pytest-cov"
 
 # command to run tests: python -m unittest discover
 script: 
+  - pytest
   - pylint src/
-  - pytest --cov= src/
+  - pytest --cov=src/
   
 after_success:
   - bash <(curl -s https://codecov.io/bash) -t 1a78cb74-6d5a-4f30-af21-469d1e99776e

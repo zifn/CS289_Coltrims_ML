@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import pandas as pd
 
 from .. import parsing
 
@@ -14,7 +13,7 @@ def test_read_write():
                         "Px_neutral", "Py_neutral", "Pz_neutral",
                         "Px_elec_1", "Py_elec_1", "Pz_elec_1",
                         "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
-    
+
     for write_headers in [False, True]:
         for return_np in [True, False]:
             print(write_headers, return_np)
@@ -23,10 +22,10 @@ def test_read_write():
             if not return_np:
                 if write_headers:
                     read_headers = read_values.columns.to_list()
-                    assert(read_headers == headers)
+                    assert read_headers == headers
                 parsing.write_momentum(temp_path, values, write_headers)
                 read_values = parsing.read_momentum(temp_path, True, write_headers)
             print(values.shape)
             print(read_values.shape)
-            assert(np.array_equal(values, read_values))
+            assert np.array_equal(values, read_values)
             os.remove(temp_path)

@@ -8,8 +8,7 @@ from .. import parsing
 def test_read_write():
     temp_path = "temp.dat"
     rng = np.random.default_rng()
-    #values = rng.standard_normal([2, 15])
-    values = rng.integers(0, 9, [2, 15])
+    values = rng.integers(0, 200, [200, 15])
     headers = ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
                         "Px_ion_2", "Py_ion_2", "Pz_ion_2",
                         "Px_neutral", "Py_neutral", "Pz_neutral",

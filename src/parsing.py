@@ -88,7 +88,7 @@ def write_momentum(output_file_path, momentum, write_headers=False):
                 header_txt += header + " "
             np.savetxt(output_file_path, momentum, delimiter=' ', header=header_txt[:-1], comments='')
     else: # assume momentum is a pandas dataframe
-        if not write_headers:
+        if write_headers:
             momentum.to_csv(output_file_path, sep=" ", header=headers, index=False)
         else:
             momentum.to_csv(output_file_path, sep=" ", header=False, index=False)

@@ -16,16 +16,15 @@ def test_read_write():
 
     for write_headers in [False, True]:
         for return_np in [True, False]:
-            print(write_headers, return_np)
+            print(f"write_headers = {write_headers}, return_np = {return_np}")
             parsing.write_momentum(temp_path, values, write_headers)
             read_values = parsing.read_momentum(temp_path, return_np, write_headers)
             if not return_np:
-                if write_headers:
-                    read_headers = read_values.columns.to_list()
-                    assert read_headers == headers
-                parsing.write_momentum(temp_path, values, write_headers)
+                read_headers = read_values.columns.to_list()
+                assert read_headers == headers
+                parsing.write_momentum(temp_path, read_values, write_headers)
                 read_values = parsing.read_momentum(temp_path, True, write_headers)
-            print(values.shape)
-            print(read_values.shape)
+            print("values.shape = ", values.shape)
+            print("read_values.shape = ", read_values.shape)
             assert np.array_equal(values, read_values)
             os.remove(temp_path)

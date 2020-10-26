@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 
 def read_momentum(input_file_path, return_numpy=True, has_headers=False,
-                                    headers=["Px_ion_1", "Py_ion_1", "Pz_ion_1",
+                                    headers=("Px_ion_1", "Py_ion_1", "Pz_ion_1",
                                                     "Px_ion_2", "Py_ion_2", "Pz_ion_2",
                                                     "Px_neutral", "Py_neutral", "Pz_neutral",
                                                     "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-                                                    "Px_elec_2", "Py_elec_2", "Pz_elec_2"]):):
+                                                    "Px_elec_2", "Py_elec_2", "Pz_elec_2")):
     """
     Function to read input momentum data from a COLTRIMS dataset. Expects the
     input file to be a ' ' delimited file representing the momenta of each particle
@@ -48,11 +48,11 @@ def read_momentum(input_file_path, return_numpy=True, has_headers=False,
         return momentum_df
 
 def write_momentum(output_file_path, momentum, write_headers=False,
-                                    headers=["Px_ion_1", "Py_ion_1", "Pz_ion_1",
+                                    headers=("Px_ion_1", "Py_ion_1", "Pz_ion_1",
                                                     "Px_ion_2", "Py_ion_2", "Pz_ion_2",
                                                     "Px_neutral", "Py_neutral", "Pz_neutral",
                                                     "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-                                                    "Px_elec_2", "Py_elec_2", "Pz_elec_2"]):
+                                                    "Px_elec_2", "Py_elec_2", "Pz_elec_2")):
     """
     Saves momenta data in either numpy array or dataframe format as a ' ' delimited
     file.

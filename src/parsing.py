@@ -26,7 +26,7 @@ def read_momentum(input_file_path, return_numpy=True, has_headers=False):
     Returns
     --------
     array or dataframe
-            Returns an n by 18 array or dataframe depending on the input parameters.
+            Returns an n by 15 array or dataframe depending on the input parameters.
             If a pandas dataframe is returned the headers will be
             ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
             "Px_ion_2", "Py_ion_2", "Pz_ion_2",
@@ -57,7 +57,7 @@ def read_momentum(input_file_path, return_numpy=True, has_headers=False):
 def write_momentum(output_file_path, momentum, write_headers=False):
     """
     Saves momenta data in either numpy array or dataframe format as a ' ' delimited
-    file. Expects an n by 18 shaped input
+    file. Expects an n by 15 shaped input
 
     Parameters
     ------------

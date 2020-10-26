@@ -5,7 +5,7 @@ import yaml
 def read_momentum(input_file_path, return_numpy=True, has_headers=False):
     """
     Function to read input momentum data from a COLTRIMS dataset. Expects the
-    input file to be a ' ' delimited file with n rows and 18 columns representing the
+    input file to be a ' ' delimited file with n rows and 15 columns representing the
     momenta of 5 particles detected in coicidence.
     
     Parameters
@@ -35,25 +35,25 @@ def read_momentum(input_file_path, return_numpy=True, has_headers=False):
             "Px_elec_1", "Py_elec_1", "Pz_elec_1",
             "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
     """
-        headers = ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
-                        "Px_ion_2", "Py_ion_2", "Pz_ion_2",
-                        "Px_neutral", "Py_neutral", "Pz_neutral",
-                        "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-                        "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
-        if has_headers:
-            momentum_df = pd.read_csv(input_file_path,
-                                                        sep=" ",
-                                                        header=None,
-                                                        names=headers)
-        else:
-            momentum_df = pd.read_csv(input_file_path,
-                                                        sep=" ",
-                                                        header=0,
-                                                        names=headers)
-        if return_numpy:
-            return momentum_df.to-numpy()
-        else:
-            return momentum_df
+    headers = ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
+                    "Px_ion_2", "Py_ion_2", "Pz_ion_2",
+                    "Px_neutral", "Py_neutral", "Pz_neutral",
+                    "Px_elec_1", "Py_elec_1", "Pz_elec_1",
+                    "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
+    if has_headers:
+        momentum_df = pd.read_csv(input_file_path,
+                                                    sep=" ",
+                                                    header=0,
+                                                    names=headers)
+    else:
+        momentum_df = pd.read_csv(input_file_path,
+                                                    sep=" ",
+                                                    header=None,
+                                                    names=headers)
+    if return_numpy:
+        return momentum_df.to_numpy()
+    else:
+        return momentum_df
 
 def write_momentum(output_file_path, momentum, write_headers=False):
     """
@@ -65,7 +65,7 @@ def write_momentum(output_file_path, momentum, write_headers=False):
     output_file_path: str or path-like
         file location to save the input data
     momentum : array or dataframe
-        data to save. Should be an n by 18 shaped numpy array or dataframe.
+        data to save. Should be an n by 15 shaped numpy array or dataframe.
     write_headers : bool
         If true will write the following list as a header to the top of the file:
         ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
@@ -85,7 +85,10 @@ def write_momentum(output_file_path, momentum, write_headers=False):
         if not write_headers:
             np.savetxt(output_file_path, momentum, delimiter=' ')
         else:
-            np.savetxt(output_file_path, momentum, delimiter=' ', header=headers)
+            header_txt = ''
+            for header in headers:
+                header_txt += header + " "
+            np.savetxt(output_file_path, momentum, delimiter=' ', header=header_txt[:-1], comments='')
     else: # assume momentum is a pandas dataframe
         if not write_headers:
             momentum.to_csv(output_file_path, sep=" ", header=headers, index=False)

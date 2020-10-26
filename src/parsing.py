@@ -1,11 +1,16 @@
 import pandas as pd
 import numpy as np
 
-def read_momentum(input_file_path, return_numpy=True, has_headers=False):
+def read_momentum(input_file_path, return_numpy=True, has_headers=False,
+                                    headers=["Px_ion_1", "Py_ion_1", "Pz_ion_1",
+                                                    "Px_ion_2", "Py_ion_2", "Pz_ion_2",
+                                                    "Px_neutral", "Py_neutral", "Pz_neutral",
+                                                    "Px_elec_1", "Py_elec_1", "Pz_elec_1",
+                                                    "Px_elec_2", "Py_elec_2", "Pz_elec_2"]):):
     """
     Function to read input momentum data from a COLTRIMS dataset. Expects the
-    input file to be a ' ' delimited file with n rows and 15 columns representing the
-    momenta of 5 particles detected in coicidence.
+    input file to be a ' ' delimited file representing the momenta of each particle
+    detected in coicidence.
 
     Parameters
     ------------
@@ -17,28 +22,16 @@ def read_momentum(input_file_path, return_numpy=True, has_headers=False):
         asks if the input file has headers or not. If the input file has a header on the
         first line, the header names will be over written to the following names in
         order:
-            ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
-                "Px_ion_2", "Py_ion_2", "Pz_ion_2",
-                "Px_neutral", "Py_neutral", "Pz_neutral",
-                "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-                "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
+    headers : list of strings
+        a list of header names for the intermidiate or output dataframe
 
     Returns
     --------
     array or dataframe
-            Returns an n by 15 array or dataframe depending on the input parameters.
-            If a pandas dataframe is returned the headers will be
-            ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
-            "Px_ion_2", "Py_ion_2", "Pz_ion_2",
-            "Px_neutral", "Py_neutral", "Pz_neutral",
-            "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-            "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
+            Returns an array or dataframe depending on the input parameters.
+            If a pandas dataframe is returned the headers will be those supplied
+            to the function.
     """
-    headers = ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
-                    "Px_ion_2", "Py_ion_2", "Pz_ion_2",
-                    "Px_neutral", "Py_neutral", "Pz_neutral",
-                    "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-                    "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
     if has_headers:
         momentum_df = pd.read_csv(input_file_path,
                                                     sep=" ",
@@ -54,10 +47,15 @@ def read_momentum(input_file_path, return_numpy=True, has_headers=False):
     else:
         return momentum_df
 
-def write_momentum(output_file_path, momentum, write_headers=False):
+def write_momentum(output_file_path, momentum, write_headers=False,
+                                    headers=["Px_ion_1", "Py_ion_1", "Pz_ion_1",
+                                                    "Px_ion_2", "Py_ion_2", "Pz_ion_2",
+                                                    "Px_neutral", "Py_neutral", "Pz_neutral",
+                                                    "Px_elec_1", "Py_elec_1", "Pz_elec_1",
+                                                    "Px_elec_2", "Py_elec_2", "Pz_elec_2"]):
     """
     Saves momenta data in either numpy array or dataframe format as a ' ' delimited
-    file. Expects an n by 15 shaped input
+    file.
 
     Parameters
     ------------
@@ -66,18 +64,10 @@ def write_momentum(output_file_path, momentum, write_headers=False):
     momentum : array or dataframe
         data to save. Should be an n by 15 shaped numpy array or dataframe.
     write_headers : bool
-        If true will write the following list as a header to the top of the file:
-        ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
-            "Px_ion_2", "Py_ion_2", "Pz_ion_2",
-            "Px_neutral", "Py_neutral", "Pz_neutral",
-            "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-            "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
+        If true will write the following list as a header to the top of the file
+    headers : list of strings
+        a list of header names for the saved data file
     """
-    headers = ["Px_ion_1", "Py_ion_1", "Pz_ion_1",
-                    "Px_ion_2", "Py_ion_2", "Pz_ion_2",
-                    "Px_neutral", "Py_neutral", "Pz_neutral",
-                    "Px_elec_1", "Py_elec_1", "Pz_elec_1",
-                    "Px_elec_2", "Py_elec_2", "Pz_elec_2"]
 
     if isinstance(momentum, np.ndarray):
         if not write_headers:

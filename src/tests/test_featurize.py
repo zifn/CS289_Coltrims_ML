@@ -32,12 +32,19 @@ def feature_index_recursion(n, d):
         return [[i] for i in range(n)], [0,1,2,3]
     else:           # Inductive step
         # previous indices is the indices required to create the degree d-1 features.
-        # previous_nums are the indices in the previous degree features array where we start index to append on the current column to get the desired degree features; i.e. for degree 2, previous indices are [[0],[1],[2],[3]] and previous nums are [0,1,2,3]. Thus when prepending [0] to each of these, we start at index 0. When prepending [1], we start at index 1 to prevent redundancy (don't need [1,0] since this is equivalent to [0.1]).
+        # previous_nums are the indices in the previous degree features array where we
+            # start index to append on the current column to get the desired degree
+            # features; i.e. for degree 2, previous indices are [[0],[1],[2],[3]] and
+            # previous nums are [0,1,2,3]. Thus when prepending [0] to each of these, we
+            # start at index 0. When prepending [1], we start at index 1 to prevent redundancy
+            # (don't need [1,0] since this is equivalent to [0.1]).
         previous_indices, previous_nums = feature_index_recursion(n, d-1)
         new_previous_nums = copy.deepcopy(previous_nums)
         indices = copy.deepcopy(previous_indices)
 
-        # We want the index of where the degree d-1 features begin in the previous_indices array. We do this by calculating the number of degree d-2 features (remember to not include the constant feature).
+        # We want the index of where the degree d-1 features begin in the
+            # previous_indices array. We do this by calculating the number of degree d-2
+            # features (remember to not include the constant feature).
         starting_index = int(sp.special.comb(n + d-2, d-2) - 1)
 
         for i in range(n):
@@ -59,9 +66,9 @@ def feature_index_recursion(n, d):
 def generate_feature_matrix_by_hand(data, degree=2):
 
     """
-    Function performs the same task as 'featurize.generate_feature_matrix' but by hand
-    rather than with sklearn for testing purposes only. Use the above function
-    for actual learning.
+    Function performs the same task as 'featurize.generate_feature_matrix' but
+    by hand rather than with sklearn for testing purposes only. Use the
+    function in the featurize module for actual learning.
 
     Parameters
     ------------
@@ -104,4 +111,3 @@ def test_placeholder():
         by_hand = generate_feature_matrix_by_hand(data, degree=i+1)
         by_sklearn = featurize.generate_feature_matrix(data, degree=i+1)
         assert np.all(np.isclose(by_hand, by_sklearn))
-    pass

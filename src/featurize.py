@@ -35,7 +35,10 @@ def generate_feature_matrix(data, degree=2):
 
     feature_data = featurizer.fit_transform(data)
 
-    assert feature_data.shape[0] == data.shape[0]      # Ensure we have the right number of rows.
-    assert feature_data.shape[1] == sp.special.comb(data.shape[1] + degree, degree)    # Ensure we have the predicted number of columns.
+    # Ensure we have the right number of rows.
+    assert feature_data.shape[0] == data.shape[0]
+    # Ensure we have the predicted number of columns.
+    assert feature_data.shape[1] == sp.special.comb(data.shape[1] + degree,
+                                                    degree)
 
     return feature_data

@@ -1,7 +1,7 @@
 import copy
 import scipy as sp
 import numpy as np
-from .. import featurize
+from .. import preprocess
 
 def feature_index_recursion(n, d):
     """
@@ -104,10 +104,10 @@ def generate_feature_matrix_by_hand(data, degree=2):
     return feature_data
 
 
-def test_placeholder():
+def test_featurize():
     data = np.random.rand(200).reshape(50,4)
 
     for i in range(10):
         by_hand = generate_feature_matrix_by_hand(data, degree=i+1)
-        by_sklearn = featurize.generate_feature_matrix(data, degree=i+1)
+        by_sklearn = preprocess.generate_feature_matrix(data, degree=i+1)
         assert np.all(np.isclose(by_hand, by_sklearn))

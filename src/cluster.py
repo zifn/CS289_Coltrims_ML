@@ -1,8 +1,6 @@
-import numpy as np
-import scipy as sp
 import sklearn.cluster
 
-def k_means(data, num_clusters)
+def k_means(data, num_clusters):
     """
     Function to perform k_means clustering using sklearn package. The number of
     clusters is specified by 'num_clusters' parameter, so this is a hyperparameter
@@ -34,8 +32,7 @@ def k_means(data, num_clusters)
 
     kmeans = sklearn.cluster.KMeans(n_cluster=num_clusters, verbose=0)
     result = kmeans.fit(data)
-    assert(data.shape[0] == len(result.labels_), 'Array of cluster labels is not
-           same length as number of data points.')
+    assert data.shape[0] == len(result.labels_), "Array of cluster labels is not same length as number of data points."
     if result.n_iter == 300:
         print('Warning: k-means may not have converged.')
     return result.labels_, result.cluster_centers

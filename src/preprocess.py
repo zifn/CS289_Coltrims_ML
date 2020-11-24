@@ -42,3 +42,36 @@ def generate_feature_matrix(data, degree=2):
                                                     degree)
 
     return feature_data
+
+def standardize_data(data):
+
+    """
+    Standardize features by removing the mean and scaling to unit variance.
+    Centering and scaling happen independently on each feature. Such data
+    preprocessing is helpful for clustering approaches that use L1 or L2
+    regularizers of data (interested in spatial relationships between data points).
+    We can think about this in terms of k-means; we want each cluster to be a
+    standard gaussian for easy identification.
+
+    Parameters
+    ------------
+    data : np.array (pandas dataframe not currently supported)
+        Array containing a row for each scattering event. This array can contain
+        either the raw or featurized data. The original data will NOT be altered.
+
+    Returns
+    --------
+    np.array (pandas dataframe not currently supported)
+        Returns the standardized data matrix for use in clustering.
+    """
+
+    standardizer = sklearn.preprocessing.StandardScaler(copy=True,
+                                                      with_mean=True,
+                                                      with_std=True)
+    # copy - create copy of data rather than do in-place scaling.
+    # with_mean - center data before scaling.
+    # with_std - scale data to unit variance (unit std)
+
+    standard_data = standardizer.fit_transform(data)
+
+    return standard_data

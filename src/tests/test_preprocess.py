@@ -111,3 +111,26 @@ def test_featurize():
         by_hand = generate_feature_matrix_by_hand(data, degree=i+1)
         by_sklearn = preprocess.generate_feature_matrix(data, degree=i+1)
         assert np.all(np.isclose(by_hand, by_sklearn))
+
+def test_standardize():
+    data = np.random.rand(200).reshape(50,4)
+
+    standard_data = preprocess.standardize_data(data)
+
+    # Check means of features
+    assert np.all(np.isclose(np.mean(standard_data, axis=0), 0))
+
+    # Check standard deviation
+    assert np.all(np.isclose(np.std(standard_data, axis=0), 1))
+
+def test_whiten():
+    data = np.random.rand(200).reshape(50,4)
+
+    white_data = preprocess.whiten_data(data)
+
+    # Check means of features
+    assert np.all(np.isclose(np.mean(white_data, axis=0), 0))
+
+    # Check standard deviation - we compute the covariance matrix comparing
+    # different features and check that it is similar to the identity matrix.
+    assert np.all(np.isclose(np.cov(white_data.T), np.eye(data.shape[1])))

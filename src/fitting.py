@@ -1,4 +1,4 @@
-from scipy.special import shp_harm
+from scipy.special import sph_harm
 import numpy as np
 
 def cart_to_spherical(M_xyz):
@@ -14,7 +14,8 @@ def cart_to_spherical(M_xyz):
         Y = M_xyz[:,i*3 + 1]
         Z = M_xyz[:,i*3 + 2]
         
-        M_sph[:,i*3] = np.sqrt(X**2 + Y**2 + Z**2) # R
+        R = np.sqrt(X**2 + Y**2 + Z**2) # R
+        M_sph[:,i*3] = R
         M_sph[:,i*3 + 1] = np.arctan2(Y, X) # theta
         M_sph[:,i*3 + 2] = np.arccos(Z/R) # phi
     
@@ -27,7 +28,7 @@ def spherical_to_cart(M_sph):
     """
     assert(M_sph.shape[1]%3 == 0)
 
-    M_sph = np.zeros(M_sph.shape)
+    M_xyz = np.zeros(M_sph.shape)
     for i in range(M_sph.shape[1]//3):
         R = M_sph[:,i*3]
         Theta = M_sph[:,i*3 + 1]
@@ -39,21 +40,24 @@ def spherical_to_cart(M_sph):
     
     return M_xyz
 
-def sum_Y_lms(theta, phi, L_max, B_lms):
+def sum_Y_lms(theta, phi, L_max, B_lms, only_even_Ls=False):
     """
     Sum of Y_lms for spherical harmonics
     """
-    assert(B_lms.shape[0] == L_max and B_lms.shape[1] == L_max)
+    assert(B_lms.shape[0] == L_max + 1 and B_lms.shape[1] == L_max + 1)
     accum = np.zeros(len(theta))
-    for L in range(0, L_max):
-        for M in range(0, L):
-            accum += B_lms[L, M]*np.real(sph_harm(M, L, theta, phi))
+    for L in range(0, L_max + 1):
+        if only_even_Ls and L%2 == 1:
+            pass
+        for M in range(0, L + 1):
+            temp = B_lms[L, M]*np.real(sph_harm(M, L, theta, phi))
+            accum += temp
     return accum
 
-def Y_lms_distribution(theta, phi, L_max, B_lms):
-    return sum_Y_lms(theta, phi, L_max, B_lms)/B_lms[0, 0]
+def Y_lms_distribution(theta, phi, L_max, B_lms, only_even_Ls=False):
+    return sum_Y_lms(theta, phi, L_max, B_lms, only_even_Ls)/B_lms[0, 0]
 
-def SDA_Y_lms_distribution(M_xyz, L_max, eta=0.001, epochs=3, batch_fraction=0.01):
+def SDA_Y_lms_distribution(M_xyz, L_max, eta=0.001, epochs=3, batch_fraction=0.01, only_even_Ls=False):
     """
     Stochastic gradient assent update for probability distribution based on spherical harmonics
     
@@ -77,35 +81,38 @@ def SDA_Y_lms_distribution(M_xyz, L_max, eta=0.001, epochs=3, batch_fraction=0.0
     """
     assert(M_xyz.shape[1] == 3)
     assert(batch_fraction <= 1 and batch_fraction > 0)
-    assert(eta > 0)
+    #assert(eta > 0)
     
     rng = np.random.default_rng()
     # set up initial parameters and parameters that are called often
     N = M_xyz.shape[0]
     N_f = int(N*batch_fraction)
-    B_lms = np.zeros([L_max, L_max])
+    B_lms = np.zeros([L_max + 1, L_max + 1])
     B_lms[0, 0] = 1
     # convert to spherical
     M_sph = cart_to_spherical(M_xyz)
     
     for i in range(epochs):
         # set up new array of indices and choose a subset for the next batch
-        indices = np.arange(0, N, 1)
-        batch_ind = rng.choice(indices, size=N_f, replace=False)
-        indices = np.delete(indices, batch_ind)
+        indices = list(range(0, N))
+        rng.shuffle(indices)
+        batch_ind = indices[:N_f]
+        indices = indices[N_f:]
         for j in range(int(1/batch_fraction)):
             # compute the update
             M_sph_batch = M_sph[batch_ind, :]
-            F = sum_Y_lms(M_sph_batch[:,1], M_sph_batch[:,2], L_max, B_lms)
-            for L in range(0, L_max):
-                for M in range(0, L):
+            F = sum_Y_lms(M_sph_batch[:,1], M_sph_batch[:,2], L_max, B_lms, only_even_Ls)
+            for L in range(0, L_max + 1):
+                if only_even_Ls and L%2 == 1:
+                    pass
+                for M in range(0, L + 1):
                     if L == 0 and M == 0:
                         B_lms[0, 0] -= eta*M_sph_batch.shape[0]/B_lms[0, 0]
                     f = np.real(sph_harm(M, L, M_sph_batch[:,1], M_sph_batch[:,2]))
                     B_lms[L, M] += eta*sum(f/F)
             # choose next subset of indices for the next batch
-            batch_ind = rng.choice(indices, size=N_f, replace=False)
-            indices = np.delete(indices, batch_ind)
+            batch_ind = indices[:N_f]
+            indices = indices[N_f:]
     return B_lms
     
 

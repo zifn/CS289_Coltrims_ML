@@ -90,9 +90,9 @@ def Y_lm_features(theta, phi, L_max, only_even_Ls=False):
             continue
         for M in range(0, L + 1):
             temp = np.real(sph_harm(M, L, theta, phi))
-            Y_lm_features.append(temp)
+            Y_lm_feat.append(temp)
             lm_order.append((L, M))
-    Y_lm_feat = np.array(Y_lm_features).T
+    Y_lm_feat = np.array(Y_lm_feat).T
     return Y_lm_feat, lm_order
 
 def Y_lms_distribution(theta, phi, L_max, B_lms, only_even_Ls=False):

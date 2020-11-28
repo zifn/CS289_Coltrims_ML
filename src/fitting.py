@@ -48,14 +48,39 @@ def sum_Y_lms(theta, phi, L_max, B_lms, only_even_Ls=False):
     accum = np.zeros(len(theta))
     for L in range(0, L_max + 1):
         if only_even_Ls and L%2 == 1:
-            pass
+            continue
         for M in range(0, L + 1):
             temp = B_lms[L, M]*np.real(sph_harm(M, L, theta, phi))
             accum += temp
-    return accum
+    return abs(accum)
 
 def Y_lms_distribution(theta, phi, L_max, B_lms, only_even_Ls=False):
     return sum_Y_lms(theta, phi, L_max, B_lms, only_even_Ls)/B_lms[0, 0]
+
+def fit_Y_lms_binning_least_squares(M_xyz, L_max, numb_bins, only_even_Ls=False):
+    """
+    Least Squares Fitting to get B_lm coeficients
+    
+    Parameters
+    ------------
+    M_xyz: n by 3 numpy array
+        observered data points representing the distribution in cartesian coordiantes 
+    L_max: int
+        Maximum value of L quantum number determing the number of terms to be used in the fits
+    numb_bins: int
+        number of bins in theta and phi axes
+    
+    Returns
+    --------
+    B_lms: 2D array
+        optimized B_lm coeficients used for the probability distribution
+    """
+    assert(M_xyz.shape[1] == 3)
+    assert(batch_fraction <= 1 and batch_fraction > 0)
+    M_sph = cart_to_spherical(M_xyz)
+    theta = M_sph[:, 1]
+    phi = M_sph[:, 2]
+    
 
 def SDA_Y_lms_distribution(M_xyz, L_max, eta=0.001, epochs=3, batch_fraction=0.01, only_even_Ls=False):
     """
@@ -79,6 +104,7 @@ def SDA_Y_lms_distribution(M_xyz, L_max, eta=0.001, epochs=3, batch_fraction=0.0
     B_lms: 2D array
         optimized B_lm coeficients used for the probability distribution
     """
+    raise NotImplementedError
     assert(M_xyz.shape[1] == 3)
     assert(batch_fraction <= 1 and batch_fraction > 0)
     #assert(eta > 0)
@@ -104,15 +130,17 @@ def SDA_Y_lms_distribution(M_xyz, L_max, eta=0.001, epochs=3, batch_fraction=0.0
             F = sum_Y_lms(M_sph_batch[:,1], M_sph_batch[:,2], L_max, B_lms, only_even_Ls)
             for L in range(0, L_max + 1):
                 if only_even_Ls and L%2 == 1:
-                    pass
+                    continue
                 for M in range(0, L + 1):
                     if L == 0 and M == 0:
-                        B_lms[0, 0] -= eta*M_sph_batch.shape[0]/B_lms[0, 0]
+                        B_lms[0, 0] -= eta*N_f/(B_lms[0, 0]*np.sqrt(4*np.pi))
+                        #continue #B_00 must be 1 after normalization
                     f = np.real(sph_harm(M, L, M_sph_batch[:,1], M_sph_batch[:,2]))
                     B_lms[L, M] += eta*sum(f/F)
             # choose next subset of indices for the next batch
             batch_ind = indices[:N_f]
             indices = indices[N_f:]
+        #print(f"\nEpoch = {i} B_lms:\n {B_lms}")
     return B_lms
     
 

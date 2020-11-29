@@ -66,46 +66,52 @@ def run_clustering(plot = False, center_range = 10, isotropic=True):
 
     num_clusters = 5
     print('k_means with ' + str(num_clusters) + ' clusters.')
-    labels, centers = cluster.k_means_clustering(data, num_clusters)
+    labels, centers = cluster.k_means_clustering(data, num_clusters, num_iter=500, tol=1.e-8)
     if plot:
         plot_clusters(data, 'K-means', labels, centers, limit)
     assert max(labels) + 1 == centers.shape[0]
     assert len(labels) == data.shape[0]
 
     print('Optics.')
-    labels, centers = cluster.optics_clustering(data)
+    labels, centers = cluster.optics_clustering(data, metric='cosine', min_samples=0.05)
     if plot:
         plot_clusters(data, 'Optics', labels, centers, limit)
     assert max(labels) + 1 == centers.shape[0]
     assert len(labels) == data.shape[0]
 
     print('Birch subclusters.')
-    labels, centers = cluster.birch_clustering(data, 'none')
+    labels, centers = cluster.birch_clustering(data, 'none', branching_factor=100, threshold=0.75)
     if plot:
         plot_clusters(data, 'Birch Subclusters', labels, centers, limit)
     assert max(labels) + 1 == centers.shape[0]
     assert len(labels) == data.shape[0]
 
     print('Birch agglomorative with ' + str(num_clusters) + ' clusters.')
-    labels, centers = cluster.birch_clustering(data, 'agglomorate', num_clusters)
+    labels, centers = cluster.birch_clustering(data, 'agglomorate', num_clusters, linkage='average', affinity='cosine')
     if plot:
         plot_clusters(data, 'Birch Agglomorate', labels, centers, limit)
     assert max(labels) + 1 == centers.shape[0]
     assert len(labels) == data.shape[0]
 
     print('Birch k-means with ' + str(num_clusters) + ' clusters.')
-    labels, centers = cluster.birch_clustering(data, 'k_means', num_clusters)
+    labels, centers = cluster.birch_clustering(data, 'k_means', num_clusters, tol=1.e-6, num_iter=500)
     if plot:
         plot_clusters(data, 'Birch K-means', labels, centers, limit)
     assert max(labels) + 1 == centers.shape[0]
     assert len(labels) == data.shape[0]
 
     print('Birch optics.')
-    labels, centers = cluster.birch_clustering(data, 'optics')
+    labels, centers = cluster.birch_clustering(data, 'optics', min_samples=0.05)
     if plot:
         plot_clusters(data, 'Birch Optics', labels, centers, limit)
     assert max(labels) + 1 == centers.shape[0]
     assert len(labels) == data.shape[0]
+
+def test_edge_cases():
+    data, _, _ = generate_data(center_range = 10, isotropic = False)
+    _, _ = cluster.k_means_clustering(data, num_clusters=5, num_iter=5, tol=1.e-12)
+    _, _ = cluster.birch_clustering(data, 'test')
+    _, _ = cluster.birch_clustering(data, 'agglomorate', num_clusters=5, linkage='ward', affinity='cosine')
 
 def test_clustering(plot=False):
     run_clustering(plot, 10, True)

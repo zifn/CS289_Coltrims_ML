@@ -148,7 +148,7 @@ def data_split(data, fraction=2/3, random_state=0):
     return data_train, data_test
 
 
-def molecular_frame(data):
+def molecular_frame(data, check_norms=False):
     """
     Convert data into the molecular frame by rotating data so that the hydrogens
     (ions) define a plane and thus the x, y, and z directions. Ions (hydrogens)
@@ -159,11 +159,15 @@ def molecular_frame(data):
     data : np.array (pandas dataframe not currently supported)
         Array containing a row for each scattering event. This array can contain
         either the raw or featurized data. The original data will NOT be altered.
+    check_norm : bool
+        Flag for if we should check the norms, only used in testing.
     Returns
     --------
     np.array (pandas dataframe not currently supported)
         Returns the data matrix in a molecular frame.
     """
+    print('here)')
+    print(data.shape)
     assert data.shape[1] == 15
 
     molecular_data = []
@@ -173,15 +177,42 @@ def molecular_frame(data):
     e1 = data[:, 9:12]
     e2 = data[:, 12:]
 
-    y_axis = np.cross(ion1, ion2)
-    z_axis = 1/2 * (ion1 + ion2)
+    norm_ion1 = ion1 / np.linalg.norm(ion1, axis=1)[:, None]
+    norm_ion2 = ion2 / np.linalg.norm(ion2, axis=1)[:, None]
+
+    if check_norms:
+        assert np.allclose(np.linalg.norm(norm_ion1, axis=1), np.ones(data.shape[0]))
+        assert np.allclose(np.linalg.norm(norm_ion2, axis=1), np.ones(data.shape[0]))
+
+    y_axis = np.cross(norm_ion1, norm_ion2)
+    y_axis = y_axis / np.linalg.norm(y_axis, axis=1)[:, None]
+    z_axis = norm_ion1 + norm_ion2
+    z_axis = z_axis / np.linalg.norm(z_axis, axis=1)[:, None]
     x_axis = np.cross(y_axis, z_axis)
+    x_axis = x_axis / np.linalg.norm(x_axis, axis=1)[:, None]
+    if check_norms:
+        assert np.allclose(np.linalg.norm(x_axis, axis=1), np.ones(data.shape[0]))
+        assert np.allclose(np.linalg.norm(y_axis, axis=1), np.ones(data.shape[0]))
+        assert np.allclose(np.linalg.norm(z_axis, axis=1), np.ones(data.shape[0]))
+
+    assert np.allclose(np.cross(x_axis, y_axis), z_axis)
     assert y_axis.shape == z_axis.shape == x_axis.shape == ion1.shape
 
-    molecular_data = np.hstack((np.dot(ion1, x_axis), np.dot(ion1, y_axis), np.dot(ion1, z_axis),
-                                np.dot(ion2, x_axis), np.dot(ion2, y_axis), np.dot(ion2, z_axis),
-                                np.dot(neutral, x_axis), np.dot(neutral, y_axis), np.dot(neutral, z_axis),
-                                np.dot(e1, x_axis), np.dot(e1, y_axis), np.dot(e1, z_axis),
-                                np.dot(e2, x_axis), np.dot(e2, y_axis), np.dot(e2, z_axis)))
+    print(np.einsum('ij,ij->i', ion1, x_axis).reshape(data.shape[0],1).shape)
+    molecular_data = np.hstack((np.einsum('ij,ij->i', ion1, x_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', ion1, y_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', ion1, z_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', ion2, x_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', ion2, y_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', ion2, z_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', neutral, x_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', neutral, y_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', neutral, z_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', e1, x_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', e1, y_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', e1, z_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', e2, x_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', e2, y_axis).reshape(data.shape[0],1),
+                                np.einsum('ij,ij->i', e2, z_axis).reshape(data.shape[0],1)))
 
     return molecular_data

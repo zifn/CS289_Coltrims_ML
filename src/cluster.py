@@ -4,6 +4,7 @@ import numpy as np
 
 # sk-learn user guide for clustering - https://scikit-learn.org/stable/modules/clustering.html
 
+
 def k_means_clustering(data, num_clusters, num_iter=300, num_init=10, tol=1.e-4):
     """
     Function to perform k_means clustering using sklearn package. The number of
@@ -53,12 +54,13 @@ def k_means_clustering(data, num_clusters, num_iter=300, num_init=10, tol=1.e-4)
     num_clusters = np.max(result.labels_) + 1
     cluster_centers = []
     for i in range(num_clusters):
-        cluster_centers.append(np.mean(data[result.labels_==i,:], axis=0))
+        cluster_centers.append(np.mean(data[result.labels_ == i, :], axis=0))
 
     print('Number of clusters found: ', num_clusters)
     print('Number of points not assigned cluster: ', num_outliers)
 
     return np.array(result.labels_), np.array(cluster_centers)
+
 
 def optics_clustering(data, min_samples=5, max_eps=np.inf, metric_power=2,
                       metric='minkowski'):
@@ -110,11 +112,12 @@ def optics_clustering(data, min_samples=5, max_eps=np.inf, metric_power=2,
     num_clusters = np.max(result.labels_) + 1
     cluster_centers = []
     for i in range(num_clusters):
-        cluster_centers.append(np.mean(data[result.labels_==i,:], axis=0))
+        cluster_centers.append(np.mean(data[result.labels_ == i, :], axis=0))
 
     print('Number of clusters found: ', num_clusters)
     print('Number of points not assigned cluster: ', num_outliers)
     return np.array(result.labels_), np.array(cluster_centers)
+
 
 def birch_clustering(data, clustering_type, num_clusters=None, threshold=0.5, branching_factor=50,
                      num_iter=300, num_init=10, tol=1.e-4,
@@ -204,7 +207,7 @@ def birch_clustering(data, clustering_type, num_clusters=None, threshold=0.5, br
     elif clustering_type == 'agglomorate':
         if linkage == 'ward' and affinity != 'euclidean':
             warnings.warn("Affinity='euclidean' needed for linkage='ward,' so default to affinity='euclidean.'")
-            affinity='euclidean'
+            affinity = 'euclidean'
         agglomorate = sklearn.cluster.AgglomerativeClustering(n_clusters=num_clusters,
                                                               affinity=affinity, linkage=linkage)
         birch = sklearn.cluster.Birch(threshold=threshold,
@@ -220,7 +223,8 @@ def birch_clustering(data, clustering_type, num_clusters=None, threshold=0.5, br
         birch = sklearn.cluster.Birch(threshold=threshold,
                                       branching_factor=branching_factor, n_clusters=optics)
     else:
-        warnings.warn("Unrecognized 'clustering_type' parameter: " + clustering_type + ". Defaulting to 'none' (agglomorate with no options).")
+        warnings.warn("Unrecognized 'clustering_type' parameter: " + clustering_type
+                      + ". Defaulting to 'none' (agglomorate with no options).")
         birch = sklearn.cluster.Birch(threshold=threshold,
                                       branching_factor=branching_factor, n_clusters=None)
 
@@ -231,7 +235,7 @@ def birch_clustering(data, clustering_type, num_clusters=None, threshold=0.5, br
     num_clusters = np.max(labels) + 1
     cluster_centers = []
     for i in range(num_clusters):
-        cluster_centers.append(np.mean(data[labels==i,:], axis=0))
+        cluster_centers.append(np.mean(data[labels == i, :], axis=0))
 
     print('Number of clusters found: ', num_clusters)
     print('Number of points not assigned cluster: ', num_outliers)

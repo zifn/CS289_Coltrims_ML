@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from .. import utils
 
@@ -46,3 +47,18 @@ def test_ejection_angle():
 
     ca45 = utils.ejection_angle(*p4s, *p5s, cos=True)
     assert np.isclose(ca45, -1)
+
+def test_extract_data():
+    """
+    Checks if extract_data() returns the correct values.
+    """
+
+    data = pd.DataFrame(np.arange(15).reshape(1, 15))
+
+    ion1, ion2, neutral, e1, e2 = utils.extract_data(data)
+
+    assert np.array_equal(ion1, np.array([[0, 1, 2]]))
+    assert np.array_equal(ion2, np.array([[3, 4, 5]]))
+    assert np.array_equal(neutral, np.array([[6, 7, 8]]))
+    assert np.array_equal(e1, np.array([[9, 10, 11]]))
+    assert np.array_equal(e2, np.array([[12, 13, 14]]))

@@ -30,25 +30,25 @@ def test_clustering():
     num_clusters = 5
     print('k_means with ' + str(num_clusters) + ' clusters.')
     k_labels, k_centers = cluster.k_means_clustering(data, num_clusters)
-    assert len(k_labels) == num_clusters
-    assert len(k_labels) == k_centers.shape[0]
+    assert len(k_labels) == data.shape[0]
+    assert max(k_labels) + 1 == k_centers.shape[0]
 
     print('Optics.')
     optics_labels, optics_centers = cluster.optics_clustering(data)
-    assert len(optics_labels) == optics_centers.shape[0]
+    assert max(optics_labels) + 1 == optics_centers.shape[0]
 
     print('Birch subclusters.')
     birch_labels, birch_centers = cluster.birch_clustering(data, 'none')
-    assert len(birch_labels) == birch_centers.shape[0]
+    assert max(birch_labels) + 1 == birch_centers.shape[0]
 
     print('Birch agglomorative with ' + str(num_clusters) + ' clusters.')
     birch_labels_1, birch_centers_1 = cluster.birch_clustering(data, 'agglomorate', num_clusters=5)
-    assert len(birch_labels_1) == birch_centers_1.shape[0]
+    assert max(birch_labels_1) + 1 == birch_centers_1.shape[0]
 
     print('Birch k_means with ' + str(num_clusters) + ' clusters.')
     birch_labels_2, birch_centers_2 = cluster.birch_clustering(data, 'k_means', num_clusters=5)
-    assert len(birch_labels_2) == birch_centers_2.shape[0]
+    assert max(birch_labels_2) + 1 == birch_centers_2.shape[0]
 
     print('Birch optics.')
     birch_labels_3, birch_centers_3 = cluster.birch_clustering(data, 'optics')
-    assert len(birch_labels_3) == birch_centers_3.shape[0]
+    assert max(birch_labels_3) + 1 == birch_centers_3.shape[0]

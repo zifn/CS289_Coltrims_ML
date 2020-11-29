@@ -1,6 +1,7 @@
-#import src.preprocess   # Doesn't exist until I merge my branch
-import src.fitting
-import src.parsing
+import src.preprocess as preprocess
+import src.fitting as fitting
+import src.parsing as parsing
+import src.cluster as clustering
 #import src.visualization   # Doesn't exist till Larry pushes branch.
 
 def analyze(fileName):

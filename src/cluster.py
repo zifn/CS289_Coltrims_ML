@@ -42,11 +42,6 @@ def k_means_clustering(data, num_clusters, num_iter=300):
     if result.n_iter_ == num_iter:
         print('Warning: k-means may not have converged.')
 
-    #cluster_centers = []
-    #for i in range(num_clusters):
-    #    cluster_centers.append(np.mean(data[result.labels_==i,:], axis=0))
-    #print(cluster_centers)
-
     return np.array(result.labels_), np.array(result.cluster_centers_)
 
 def optics_clustering(data):
@@ -75,8 +70,7 @@ def optics_clustering(data):
         num_clusters x data.shape[1] (the number of features).
     """
 
-    #num_points = data.shape[0]
-    optics = sklearn.cluster.OPTICS()#min_samples=int(np.sqrt(num_points)))
+    optics = sklearn.cluster.OPTICS()
     result = optics.fit(data)
     assert data.shape[0] == len(result.labels_), "Array of cluster labels is not same length as number of data points."
 
@@ -132,8 +126,7 @@ def birch_clustering(data, clustering_type, num_clusters=0):
         kmeans = sklearn.cluster.KMeans(n_clusters=num_clusters)
         birch = sklearn.cluster.Birch(n_clusters=kmeans)
     elif clustering_type == 'optics':
-        #num_points = data.shape[0]
-        optics = sklearn.cluster.OPTICS()#min_samples=int(np.sqrt(num_points)))
+        optics = sklearn.cluster.OPTICS()
         birch = sklearn.cluster.Birch(n_clusters=optics)
     else:
         print("Unrecognized 'clustering_type' parameter: ", clustering_type)

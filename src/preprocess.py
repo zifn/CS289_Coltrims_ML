@@ -119,6 +119,37 @@ def whiten_data(data):
     return white_data
 
 
+def perform_PCA(data, components=2):
+
+    """
+    Perform principal component analysis on the data to identify the two
+    directions with maximal variance. This will be used in visualization to
+    identify trends in the data.
+
+    Parameters
+    ------------
+    data : np.array (pandas dataframe not currently supported)
+        Array containing a row for each scattering event. This array can contain
+        either the raw or featurized data. The original data will NOT be altered.
+    components : int
+        Number of components to keep when performing PCA.
+
+    Returns
+    --------
+    np.array (pandas dataframe not currently supported)
+        Returns the rotated data matrix with two columns for use in visualization.
+    """
+    assert data.shape[1] >= components, 'Not enough columns in data to reduce via PCA.'
+    reducer = sklearn.decomposition.PCA(n_components=components, whiten=False)
+    # n_components - how many dimensions of data to keep; None keeps all.
+    # whiten - perform whitening on data
+
+    PCA_data = reducer.fit_transform(data)
+    assert np.all(PCA_data.shape == data[:,:components].shape), 'Standardized data and original data do not have same shape.'
+
+    return PCA_data
+
+
 def data_split(data, fraction=2/3, random_state=0):
 
     """
@@ -153,6 +184,10 @@ def molecular_frame(data, check_norms=False):
     Convert data into the molecular frame by rotating data so that the hydrogens
     (ions) define a plane and thus the x, y, and z directions. Ions (hydrogens)
     must be in columns 0 and 1.
+
+    This function only works with D2O or Water where we expect 15 columns,
+    (px, py, pz) for each of the 5 scattering constituents - ion1, ion2, neutral,
+    electron1, electron2.
 
     Parameters
     ------------

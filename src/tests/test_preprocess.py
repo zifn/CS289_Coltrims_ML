@@ -140,6 +140,16 @@ def test_whiten():
     assert np.all(np.allclose(np.cov(white_data.T), np.eye(data.shape[1])))
 
 
+def test_PCA():
+    data = np.random.rand(400).reshape(50, 8)
+
+    data_PCA = preprocess.perform_PCA(data)
+
+    # Check that right singular vectors are orthogonal after PCA.
+    _, _, Vh = sp.linalg.svd(data_PCA)
+    assert np.isclose(np.dot(Vh[0,:], Vh[1,:]), 0)
+
+
 def test_data_split():
     data = np.random.rand(2000).reshape(500, 4)
     rint = np.random.randint(0, 2**20)

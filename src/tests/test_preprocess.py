@@ -1,7 +1,8 @@
 import copy
 import scipy as sp
 import numpy as np
-from .. import featurize
+from .. import preprocess
+
 
 def feature_index_recursion(n, d):
     """
@@ -29,22 +30,22 @@ def feature_index_recursion(n, d):
     """
 
     if d == 1:      # Base case of recursion
-        return [[i] for i in range(n)], [0,1,2,3]
+        return [[i] for i in range(n)], [0, 1, 2, 3]
     else:           # Inductive step
         # previous indices is the indices required to create the degree d-1 features.
         # previous_nums are the indices in the previous degree features array where we
-            # start index to append on the current column to get the desired degree
-            # features; i.e. for degree 2, previous indices are [[0],[1],[2],[3]] and
-            # previous nums are [0,1,2,3]. Thus when prepending [0] to each of these, we
-            # start at index 0. When prepending [1], we start at index 1 to prevent redundancy
-            # (don't need [1,0] since this is equivalent to [0.1]).
+        # start index to append on the current column to get the desired degree
+        # features; i.e. for degree 2, previous indices are [[0],[1],[2],[3]] and
+        # previous nums are [0,1,2,3]. Thus when prepending [0] to each of these, we
+        # start at index 0. When prepending [1], we start at index 1 to prevent redundancy
+        # (don't need [1,0] since this is equivalent to [0.1]).
         previous_indices, previous_nums = feature_index_recursion(n, d-1)
         new_previous_nums = copy.deepcopy(previous_nums)
         indices = copy.deepcopy(previous_indices)
 
         # We want the index of where the degree d-1 features begin in the
-            # previous_indices array. We do this by calculating the number of degree d-2
-            # features (remember to not include the constant feature).
+        # previous_indices array. We do this by calculating the number of degree d-2
+        # features (remember to not include the constant feature).
         starting_index = int(sp.special.comb(n + d-2, d-2) - 1)
 
         for i in range(n):
@@ -54,7 +55,7 @@ def feature_index_recursion(n, d):
             candidates = candidates[starting_index + previous_nums[i]:]
 
             for a in candidates:
-                a.insert(0,i)   # insert i to the beginning of each element of the candidate list.
+                a.insert(0, i)   # insert i to the beginning of each element of the candidate list.
             indices = indices + candidates  # concatenate the indices and candidates list.
 
             if i < n-1:
@@ -62,6 +63,7 @@ def feature_index_recursion(n, d):
                 new_previous_nums[i+1] = new_previous_nums[i]+len(candidates)
 
         return indices, new_previous_nums
+
 
 def generate_feature_matrix_by_hand(data, degree=2):
 
@@ -90,12 +92,12 @@ def generate_feature_matrix_by_hand(data, degree=2):
     d = degree
 
     feature_indices, _ = feature_index_recursion(n, d)
-    feature_data = np.ones(data.shape[0]).reshape(data.shape[0],1)
+    feature_data = np.ones(data.shape[0]).reshape(data.shape[0], 1)
     for i in feature_indices:
         column = np.ones(data.shape[0])
 
         for j in i:
-            column *= data[:,j]
+            column *= data[:, j]
         feature_data = np.column_stack([feature_data, column])
 
     assert feature_data.shape[0] == data.shape[0]
@@ -104,10 +106,65 @@ def generate_feature_matrix_by_hand(data, degree=2):
     return feature_data
 
 
-def test_placeholder():
-    data = np.random.rand(200).reshape(50,4)
+def test_featurize():
+    data = np.random.rand(200).reshape(50, 4)
 
     for i in range(10):
         by_hand = generate_feature_matrix_by_hand(data, degree=i+1)
-        by_sklearn = featurize.generate_feature_matrix(data, degree=i+1)
-        assert np.all(np.isclose(by_hand, by_sklearn))
+        by_sklearn = preprocess.generate_feature_matrix(data, degree=i+1)
+        assert np.all(np.allclose(by_hand, by_sklearn))
+
+
+def test_standardize():
+    data = np.random.rand(200).reshape(50, 4)
+
+    standard_data = preprocess.standardize_data(data)
+
+    # Check means of features
+    assert np.all(np.isclose(np.mean(standard_data, axis=0), 0))
+
+    # Check standard deviation
+    assert np.all(np.isclose(np.std(standard_data, axis=0), 1))
+
+
+def test_whiten():
+    data = np.random.rand(200).reshape(50, 4)
+
+    white_data = preprocess.whiten_data(data)
+
+    # Check means of features
+    assert np.all(np.isclose(np.mean(white_data, axis=0), 0))
+
+    # Check standard deviation - we compute the covariance matrix comparing
+    # different features and check that it is similar to the identity matrix.
+    assert np.all(np.allclose(np.cov(white_data.T), np.eye(data.shape[1])))
+
+
+def test_PCA():
+    data = np.random.rand(400).reshape(50, 8)
+
+    data_PCA = preprocess.perform_PCA(data)
+
+    # Check that right singular vectors are orthogonal after PCA.
+    _, _, Vh = sp.linalg.svd(data_PCA)
+    assert np.isclose(np.dot(Vh[0,:], Vh[1,:]), 0)
+
+
+def test_data_split():
+    data = np.random.rand(2000).reshape(500, 4)
+    rint = np.random.randint(0, 2**20)
+    labels = np.arange(0, 500)
+
+    test_data, train_data = preprocess.data_split(data, fraction=2/3, random_state=rint)
+    test_labels, train_labels = preprocess.data_split(labels, fraction=2/3, random_state=rint)
+
+    assert np.allclose(test_data, data[test_labels, :])
+    assert np.allclose(train_data, data[train_labels, :])
+
+
+def test_molecular_frame():
+    data = np.random.rand(7500).reshape(500, 15)
+
+    molecular_data = preprocess.molecular_frame(data, check_norms=True)
+
+    assert np.allclose(molecular_data, preprocess.molecular_frame(molecular_data, check_norms=True))

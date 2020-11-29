@@ -1,3 +1,5 @@
+import numpy as np
+
 import src.preprocess as preprocess
 import src.fitting as fitting
 import src.parsing as parsing
@@ -33,8 +35,10 @@ def analyze(fileName):
     val_data = data[val_indices, :]
     test_data = data[test_indices, :]
 
-    assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1], 'Number of columns is consistent between data splits.'
-    assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], 'Number of data points is consistent between data splits.'
+    assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1],
+        'Number of columns is consistent between data splits.'
+    assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0],
+        'Number of data points is consistent between data splits.'
 
     train_phi = preprocess.generate_feature_matrix(train_data, 2)
     val_phi = preprocess.generate_feature_matrix(val_data, 2)

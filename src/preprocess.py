@@ -1,7 +1,9 @@
 import scipy as sp
 import sklearn.preprocessing
 import sklearn.decomposition
+import sklearn.model_selection
 import numpy as np
+
 
 def generate_feature_matrix(data, degree=2):
 
@@ -30,8 +32,8 @@ def generate_feature_matrix(data, degree=2):
     """
 
     featurizer = sklearn.preprocessing.PolynomialFeatures(degree=degree,
-                                                            interaction_only=False,
-                                                            include_bias=True)
+                                                          interaction_only=False,
+                                                          include_bias=True)
     # interaction_only - use distinct input features only
     # include_bias - include a bias column of all ones.
 
@@ -44,6 +46,7 @@ def generate_feature_matrix(data, degree=2):
                                                     degree)
 
     return feature_data
+
 
 def standardize_data(data):
 
@@ -73,8 +76,8 @@ def standardize_data(data):
     """
 
     standardizer = sklearn.preprocessing.StandardScaler(copy=True,
-                                                      with_mean=True,
-                                                      with_std=True)
+                                                        with_mean=True,
+                                                        with_std=True)
     # copy - create copy of data rather than do in-place scaling.
     # with_mean - center data before scaling.
     # with_std - scale data to unit variance (unit std)
@@ -83,6 +86,7 @@ def standardize_data(data):
     assert np.all(standard_data.shape == data.shape), 'Standardized data and original data do not have same shape.'
 
     return standard_data
+
 
 def whiten_data(data):
 
@@ -105,7 +109,7 @@ def whiten_data(data):
     """
 
     whitener = sklearn.decomposition.PCA(n_components=None,
-                                             whiten=True)
+                                         whiten=True)
     # n_components - how many dimensions of data to keep; None keeps all.
     # whiten - perform whitening on data
 
@@ -113,3 +117,71 @@ def whiten_data(data):
     assert np.all(white_data.shape == data.shape), 'Standardized data and original data do not have same shape.'
 
     return white_data
+
+
+def data_split(data, fraction=2/3, random_state=0):
+
+    """
+    Split data into testing and training sets depending on fraction of split and
+    random seed. Data is shuffled.
+
+    Parameters
+    ------------
+    data : np.array (pandas dataframe not currently supported)
+        Array containing a row for each scattering event. This array can contain
+        either the raw or featurized data. The original data will NOT be altered.
+    fraction : float
+        Fraction of data to be used for training data.
+    random_state : int
+        Seed for random number generator used to shuffle the data.
+    Returns
+    --------
+    np.array (pandas dataframe not currently supported)
+        Returns the data matrix for training.
+    np.array (pandas dataframe not currently supported)
+        Returns the data matrix for testing.
+    """
+
+    assert fraction <= 1
+    splitter = sklearn.model_selection.train_test_split
+    data_train, data_test = splitter(data, train_size=fraction, random_state=random_state)
+    return data_train, data_test
+
+
+def molecular_frame(data):
+    """
+    Convert data into the molecular frame by rotating data so that the hydrogens
+    (ions) define a plane and thus the x, y, and z directions. Ions (hydrogens)
+    must be in columns 0 and 1.
+
+    Parameters
+    ------------
+    data : np.array (pandas dataframe not currently supported)
+        Array containing a row for each scattering event. This array can contain
+        either the raw or featurized data. The original data will NOT be altered.
+    Returns
+    --------
+    np.array (pandas dataframe not currently supported)
+        Returns the data matrix in a molecular frame.
+    """
+    assert data.shape[1] == 15
+
+    molecular_data = []
+    ion1 = data[:, 0:3]
+    ion2 = data[:, 3:6]
+    neutral = data[:, 6:9]
+    e1 = data[:, 9:12]
+    e2 = data[:, 12:]
+
+    y_axis = np.cross(ion1, ion2)
+    z_axis = 1/2 * (ion1 + ion2)
+    x_axis = np.cross(y_axis, z_axis)
+    assert y_axis.shape == z_axis.shape == x_axis.shape == ion1.shape
+
+    molecular_data = np.hstack((np.dot(ion1, x_axis), np.dot(ion1, y_axis), np.dot(ion1, z_axis),
+                                np.dot(ion2, x_axis), np.dot(ion2, y_axis), np.dot(ion2, z_axis),
+                                np.dot(neutral, x_axis), np.dot(neutral, y_axis), np.dot(neutral, z_axis),
+                                np.dot(e1, x_axis), np.dot(e1, y_axis), np.dot(e1, z_axis),
+                                np.dot(e2, x_axis), np.dot(e2, y_axis), np.dot(e2, z_axis)))
+
+    return molecular_data

@@ -145,7 +145,7 @@ def perform_PCA(data, components=2):
     # whiten - perform whitening on data
 
     PCA_data = reducer.fit_transform(data)
-    assert np.all(PCA_data.shape == data[:,:components].shape), 'Standardized data and original data do not have same shape.'
+    assert np.all(PCA_data.shape == data[:,:components].shape), 'PCA data and original data do not have same shape.'
 
     return PCA_data
 

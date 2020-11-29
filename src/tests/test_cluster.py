@@ -113,7 +113,7 @@ def run_clustering(plot = False, center_range = 10, isotropic=True):
 
 def test_edge_cases():
     data, _, _ = generate_data(center_range=10, isotropic = False)
-    _, _ = cluster.k_means_clustering(data, num_clusters=5, num_iter=5, tol=1.e-12)
+    _, _ = cluster.k_means_clustering(data, num_clusters=5, num_iter=3, tol=1.e-14)
     _, _ = cluster.birch_clustering(data, 'test')
     _, _ = cluster.birch_clustering(data, 'agglomorate', num_clusters=5, linkage='ward', affinity='cosine')
 

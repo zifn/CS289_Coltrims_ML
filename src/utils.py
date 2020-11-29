@@ -34,7 +34,7 @@ def kinetic_energy(px, py, pz, mass):
     """
     return 0.5*(px**2 + py**2 + pz**2)/mass
 
-def ejection_angle(px1, py1, pz1, px2, py2, pz2, cos=True):
+def ejection_angle(px1, py1, pz1, px2, py2, pz2, cos=False):
     """
     Function to compute the ejection angle between two ions from the COLTRIMS
     data. Takes the xyz momentums of each ion and returns the angle theta
@@ -72,7 +72,7 @@ def ejection_angle(px1, py1, pz1, px2, py2, pz2, cos=True):
 
     ca = (px1 * px2 + py1 * py2 + pz1 * pz2)/normalization
 
-    return ca if cos else np.arcos(ca)
+    return ca if cos else np.arccos(ca)
 
 def extract_data(dataset):
     if isinstance(dataset, pd.DataFrame):

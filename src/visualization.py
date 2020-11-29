@@ -268,16 +268,15 @@ def plot_KER_vs_angle(dataset, clusters=None, bins=None, cos=False, **kwargs):
 
     return format_plot(plot, 'KER', r'$\theta$')
 
-def plot_KER_vs_electron_energy_difference(
+def plot_electron_energy_vs_ion_energy_difference(
     dataset,
     clusters=None,
     bins=None,
     **kwargs
 ):
     """
-    Function to plot the total kinetic energy release vs the energy difference
-    between the two electrons. If bins is not None, the data will be binned
-    along both axes.
+    Function to plot the electron sum energy vs the energy difference between
+    the two ions. If bins is not None, the data will be binned along both axes.
 
     Parameters
     ------------
@@ -302,16 +301,12 @@ def plot_KER_vs_electron_energy_difference(
 
     energies = [kinetic_energy(*p.T, m) for p, m in zip(particles, masses)]
 
-    e1, e2 = particles[-2:]
-    energy1 = kinetic_energy(*e1.T, ELECTRON_MASS)
-    energy2 = kinetic_energy(*e2.T, ELECTRON_MASS)
-
-    KER = sum(energies)
-    energy_difference = np.abs(energy1 - energy2)
+    electron_sum = energies[0] + energies[1]
+    ion_difference = np.abs(energies[3] - energies[4])
 
     if bins:
-        plot = plot_2d_histogram(KER, energy_difference, bins, **kwargs)
+        plot = plot_2d_histogram(electron_sum, ion_difference, bins, **kwargs)
     else:
-        plot = plot_data(KER, energy_difference, clusters, **kwargs)
+        plot = plot_data(electron_sum, ion_difference, clusters, **kwargs)
 
-    return format_plot(plot, 'KER', 'Electron Energy Difference')
+    return format_plot(plot, 'Electron Sum Energy', 'Ion Energy Difference')

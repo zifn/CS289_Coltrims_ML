@@ -37,31 +37,59 @@ def analyze(fileName):
     val_data = data[val_indices, :]
     test_data = data[test_indices, :]
 
-    assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1], 'Number of columns is consistent between data splits.'
-    assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], 'Number of data points is consistent between data splits.'
-
+    assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1], \
+        'Number of columns is consistent between data splits.'
+    assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], \
+        'Number of data points is consistent between data splits.'
+    print('Got to here.')
     # Cluster one via k-means with 5 clusters
-
-    k5_labels = clustering.k_means_clustering(phi, 5)
+    num_clusters = 5
+    k5_labels, k5_centers = clustering.k_means_clustering(phi, num_clusters=num_clusters)
 
     # Choose best angular distribution hyperparameters
-    # ion_data = 
+    ion_data = np.vstack((data[:,0:3], data[:,3:6]))
+    assert np.all(ion_data.shape == (data.shape[0]*2, 3))
+    entropies = []
+    parameters = []
+    L_max = 2
+
+    ion_data = []
+    for i in range(num_clusters):
+        ion_data.append(np.vstack((data[train_indices==i, 0:3], data[train_indices==i, 3:6])))
+
+    val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
+    val_ion_labels = np.vstack((k5_labels[val_indices], k5_labels[val_indices]))
+
     for L in range(0, L_max+1):
-        for num_bins in range(50, 210, 10):
-            
+        for num_bins in range(50, 110, 10):
+            print(L, num_bins)
+            Bs = []
+            for i in range(num_clusters):
+                B_lms, lm_order = fit_Y_lms_binning_least_squares(
+                    ion_data[i], L,
+                    num_bins,
+                    only_even_Ls=False
+                )
+                Bs.append(B_lms)
+            entropy.append(validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False))
+            parameters.append((L, num_bins))
+
+    entropy = np.array(entropy)
+    optimal_index = np.argmin(entropy)
+    optimal_parameters = parameters[optimal_index]
+    print(optimal_parameters)
 
     # With best ang. dist. parameters, choose best clustering method and hyperparameters; repeat process.
 
-    
+
 if __name__ == '__main__':
     parser = ArgumentParser(
         description='Analyze a COLTRIMS dataset.',
         add_help=True
     )
-    parser.add_argument('file')
-
+    parser.add_argument('file', help='Path to the COLTRIMS datafile.')
+    parser.add_argument('-c', '--config', help='Path to configuration file.')
+    
     args = parser.parse_args()
 
-    print(args)
-    
-    # analyze('D2O_momenta.dat')
+    analyze(args.file)

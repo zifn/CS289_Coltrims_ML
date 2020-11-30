@@ -1,6 +1,9 @@
 # Data Files
 *.dat
 
+# VSCode Files
+.vscode/*
+
 # OS X
 .DS_Store
 

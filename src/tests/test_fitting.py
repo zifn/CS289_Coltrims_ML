@@ -84,3 +84,33 @@ def test_fit_Y_lms_va_binning():
             print("MSE of probs after opt = ", np.mean((est_probs - angles_probs)**2))
             assert np.all(est_probs >= 0)
             assert np.mean((est_probs - angles_probs)**2) < 10**-8
+
+def test_validation_cross_entropy():
+    """
+    simple test of cross entropy function
+    """
+    # make uniform B_lms
+    sample_B_lms = []
+    N_valid = 100
+    L_max = 3
+    
+    for L in range(0, L_max + 1):
+        for _ in range(L+1):
+            sample_B_lms.append(0)
+    sample_B_lms[0] = 1
+    sample_B_lms = np.array(sample_B_lms)
+    
+    # sample points
+    rng = np.random.default_rng()
+    theta = np.linspace(0, 2*np.pi, 2001)
+    phi = np.linspace(0, np.pi, 2001)
+    
+    samples = np.array([np.ones(N_valid),
+                                    rng.choice(theta, size=N_valid, replace=True),
+                                    rng.choice(phi, size=N_valid, replace=True)]).T
+    samples = fitting.spherical_to_cart(samples)
+    labels = np.zeros(N_valid)
+    model_params = [sample_B_lms]
+
+    entropy = fitting.validation_cross_entropy(samples, labels, model_params, L_max, only_even_Ls=False)
+    assert np.isclose(entropy, 0)

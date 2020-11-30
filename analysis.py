@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from argparse import ArgumentParser
 
-def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method="kmeans-molecular-frame"):
+def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method="kmeans-whitened-molecular-frame"):
     k = len(np.unique(cluster_labels))
     root_dir = "privileged"
     if not os.path.isdir(root_dir):
@@ -21,7 +21,7 @@ def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method=
     dir_name = os.path.join(root_dir, dir_name)
 
     while os.path.isdir(dir_name):
-        dir_name += "_"
+        dir_name += "-"
     os.mkdir(dir_name)
     
     for cluster_label in np.unique(cluster_labels):
@@ -115,7 +115,7 @@ def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, t
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
     
-    file_path = os.path.join("privileged", "kmeans-molecular-frame_optimal_parameters.csv")
+    file_path = os.path.join("privileged", "kmeans-whitened-molecular-frame_optimal_parameters.csv")
     np.savetxt(file_path, np.array(parameters), header="L, num_bins, cross_entropy")
     return optimal_parameters
 
@@ -149,7 +149,7 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
             Bs.append(B_lms)
         entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L_max, only_even_Ls=False)
         parameters.append((N, entropy))
-        directory = save_clusters(labels, data, L_max, num_bins, entropy, clustering_method="kmeans-molecular-frame")
+        directory = save_clusters(labels, data, L_max, num_bins, entropy, clustering_method="kmeans-whitened-molecular-frame")
         visualize_clusters(directory)
         print(parameters[-1])
 
@@ -158,7 +158,7 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
     
-    file_path = os.path.join("privileged", "kmeans-molecular-frame_k_vs_cross_entropy.csv")
+    file_path = os.path.join("privileged", "kmeans--whitened-molecular-frame_k_vs_cross_entropy.csv")
     np.savetxt(file_path, np.array(parameters), header="k, cross_entropy")
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
@@ -182,9 +182,10 @@ def analyze(fileName):
     #    of the involved scattering constituents.
     """
     data = parsing.read_momentum(fileName)
-    data = preprocess.molecular_frame(data[:10000, :])
+    data = preprocess.molecular_frame(data[:, :])
     print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
     phi = preprocess.generate_feature_matrix(data)
+    phi = whiten_data(phi)
     
     indices = np.arange(data.shape[0])
     train_indices, test_val_indices = preprocess.data_split(indices, .70, 23)
@@ -212,7 +213,7 @@ def analyze(fileName):
     num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, cluster_range, L_max, num_bins)    
     #save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
     
-    directory = save_clusters(k_labels, data, L_max, num_bins, entropy, clustering_method="kmeans-molecular-frame")
+    directory = save_clusters(k_labels, data, L_max, num_bins, entropy, clustering_method="kmeans-whitened-molecular-frame")
     visualize_clusters(directory)
 
 

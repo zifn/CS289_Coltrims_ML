@@ -93,18 +93,18 @@ def test_validation_cross_entropy():
     sample_B_lms = []
     N_valid = 100
     L_max = 3
-    
+
     for L in range(0, L_max + 1):
         for _ in range(L+1):
             sample_B_lms.append(0)
     sample_B_lms[0] = 1
     sample_B_lms = np.array(sample_B_lms)
-    
+
     # sample points
     rng = np.random.default_rng()
     theta = np.linspace(0, 2*np.pi, 2001)
     phi = np.linspace(0, np.pi, 2001)
-    
+
     samples = np.array([np.ones(N_valid),
                                     rng.choice(theta, size=N_valid, replace=True),
                                     rng.choice(phi, size=N_valid, replace=True)]).T

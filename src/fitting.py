@@ -172,7 +172,7 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     """
     computes the cross entropy using the shpericial harmonic distribution and labeled data
     from clustering
-    
+
     Parameters
     ------------
     data_val_xyz: array Nx3
@@ -193,7 +193,7 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     """
     assert data_val_xyz.shape[1] == 3
     data_val_sph = cart_to_spherical(data_val_xyz)
-    
+
     unique_labels = np.unique(labels)
     assert set(list(unique_labels)) == set(range(len(model_params)))
     unique_labels = list(range(len(model_params)))

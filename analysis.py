@@ -9,11 +9,7 @@ import src.cluster as clustering
 from argparse import ArgumentParser
 
 def analyze(fileName):
-    data = parsing.read_momentum(fileName)
-    data = data[:10000, :]
-    print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
-    phi = preprocess.generate_feature_matrix(data)
-    ################################################################################
+    """
     # PREPROCESSING
     # 1. Split data into training, validation, and testing splits of 70%, 15%, 15%.
     #    Training will be used to learn the B_LM distributions and through
@@ -29,7 +25,12 @@ def analyze(fileName):
     # 4. Featurize data to add polynomial features. We expect 2nd order polynomial
     #    features to be physically relavent as these are used to calculate energies
     #    of the involved scattering constituents.
-    ################################################################################
+    """
+    data = parsing.read_momentum(fileName)
+    data = preprocess.molecular_frame(data[:10000, :])
+    print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
+    phi = preprocess.generate_feature_matrix(data)
+    
     indices = np.arange(data.shape[0])
     train_indices, test_val_indices = preprocess.data_split(indices, .70, 23)
     val_indices, test_indices = preprocess.data_split(test_val_indices, .50, 46)
@@ -47,7 +48,7 @@ def analyze(fileName):
     num_clusters = 5
     k5_labels, k5_centers = clustering.k_means_clustering(phi, num_clusters=num_clusters)
 
-    # Choose best angular distribution hyperparameters
+    # process cluster output
     ion_data = np.vstack((data[:,0:3], data[:,3:6]))
     assert np.all(ion_data.shape == (data.shape[0]*2, 3))
     entropies = []
@@ -65,10 +66,10 @@ def analyze(fileName):
     val_ion_labels = np.vstack((k5_labels[val_indices,None], k5_labels[val_indices, None])).reshape(-1)
     print(val_ion_labels.shape)
     print(val_ion_labels[0:10])
-
+    
+    # Choose best angular distribution hyperparameters
     for L in range(0, L_max+1):
         for num_bins in range(50, 210, 10):
-            print(L, num_bins)
             Bs = []
             for i in range(num_clusters):
                 B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(
@@ -77,13 +78,16 @@ def analyze(fileName):
                     only_even_Ls=False
                 )
                 Bs.append(B_lms)
-            entropies.append(fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False))
-            parameters.append((L, num_bins))
+            entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False)
+            entropies.append(entropy)
+            parameters.append((L, num_bins, entropy))
+            print(L, num_bins, entropy)
+
 
     entropies = np.array(entropies)
     optimal_index = np.argmin(entropies)
     optimal_parameters = parameters[optimal_index]
-    print(optimal_parameters)
+    print("optimal_parameters = ", optimal_parameters)
 
     # With best ang. dist. parameters, choose best clustering method and hyperparameters; repeat process.
 

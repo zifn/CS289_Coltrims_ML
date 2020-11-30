@@ -138,7 +138,7 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
 
         val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
         val_ion_labels = np.hstack((labels_val, labels_val)).reshape(-1)
-        
+
         Bs = []
         for i in range(N):
             B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(

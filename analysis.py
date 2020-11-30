@@ -52,7 +52,7 @@ def analyze(fileName):
     assert np.all(ion_data.shape == (data.shape[0]*2, 3))
     entropies = []
     parameters = []
-    L_max = 2
+    L_max = 5
 
     k5_labels_train = k5_labels[train_indices]
 
@@ -62,12 +62,12 @@ def analyze(fileName):
 
     val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
     print(val_ion_data.shape)
-    val_ion_labels = np.vstack((k5_labels[val_indices,None], k5_labels[val_indices, None]))
+    val_ion_labels = np.vstack((k5_labels[val_indices,None], k5_labels[val_indices, None])).reshape(-1)
     print(val_ion_labels.shape)
     print(val_ion_labels[0:10])
-    
+
     for L in range(0, L_max+1):
-        for num_bins in range(50, 110, 10):
+        for num_bins in range(50, 210, 10):
             print(L, num_bins)
             Bs = []
             for i in range(num_clusters):

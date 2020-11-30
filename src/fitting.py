@@ -167,3 +167,50 @@ def fit_Y_lms_binning_least_squares(M_xyz, L_max, numb_bins, only_even_Ls=False)
     B_lms = np.linalg.solve( ylm_features.T @ ylm_features, ylm_features.T @ angular_hist_flat)
 
     return B_lms, lm_order
+
+def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_even_Ls=False):
+    """
+    computes the cross entropy using the shpericial harmonic distribution and labeled data
+    from clustering
+
+    Parameters
+    ------------
+    data_val_xyz: array Nx3
+        Validation data used to compute the cross entropy of the clasification
+    labels: array of ints
+        Each entry varries from 0 to (number classes - 1). Used to reference the model params.
+    params: list of arrays
+        Each entry is a list of arrays representing the B_lms for an individual model
+    L_max: int
+        maximum L value used to generate a truncated array of Y_lms
+    only_even_Ls: bool
+        if in the molecular frame, only use even L values to generate features
+
+    Returns
+    --------
+    cross_entropy: float
+        the cross entropy given labeled validation data
+    """
+    assert data_val_xyz.shape[1] == 3
+    data_val_sph = cart_to_spherical(data_val_xyz)
+
+    unique_labels = np.unique(labels)
+    assert  set(list(unique_labels)).issubset(set(range(len(model_params))))
+    assert unique_labels.shape[0] == len(model_params) or unique_labels.shape[0] == len(model_params) + 1
+    unique_labels = list(range(len(model_params)))
+
+    # make qs
+    qs = []
+    for label in unique_labels:
+        qs.append(Y_lms_distribution(data_val_sph[:, 1], data_val_sph[:, 2],
+                                                    L_max, model_params[label], only_even_Ls))
+    qs = np.array(qs).T
+    qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
+
+    #compute cross-entropy
+    cross_entropy = 0
+    for label in unique_labels:
+        class_qs = qs[labels == label]
+        cross_entropy += -sum(np.log(class_qs[:, label]))*class_qs.shape[0]
+
+    return cross_entropy

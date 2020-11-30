@@ -6,14 +6,16 @@ import src.parsing as parsing
 import src.cluster as clustering
 #import src.visualization   # Doesn't exist till Larry pushes branch.
 
-def analyze(fileName):
-    data = src.parsing.read_momentum(fileName)
-    print('Data read from file ' + fileName + ' has shape ' + data.shape + '.')
+from argparse import ArgumentParser
 
+def analyze(fileName):
+    data = parsing.read_momentum(fileName)
+    print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
+    phi = preprocess.generate_feature_matrix(data)
     ################################################################################
     # PREPROCESSING
     # 1. Split data into training, validation, and testing splits of 70%, 15%, 15%.
-    #    Training will be used to learn the BLM distributions and through
+    #    Training will be used to learn the B_LM distributions and through
     #    cross-validation to choose the binning hyperparameters. Validation will be
     #    used to choose the best clustering method. Testing will be used to evaluate
     #    match between angular momentum distributions and clustering.
@@ -35,15 +37,29 @@ def analyze(fileName):
     val_data = data[val_indices, :]
     test_data = data[test_indices, :]
 
-    assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1],
-        'Number of columns is consistent between data splits.'
-    assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0],
-        'Number of data points is consistent between data splits.'
+    assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1], 'Number of columns is consistent between data splits.'
+    assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], 'Number of data points is consistent between data splits.'
 
-    train_phi = preprocess.generate_feature_matrix(train_data, 2)
-    val_phi = preprocess.generate_feature_matrix(val_data, 2)
-    test_phi = preprocess.generate_feature_matrix(test_data, 2)
+    # Cluster one via k-means with 5 clusters
 
+    k5_labels = clustering.k_means_clustering(phi, 5)
 
-def main():
-    analyze('D2O_momenta.dat')
+    # Choose best angular distribution hyperparameters
+    ion_data = 
+    for L in range(0, L_max+1):
+        for num_bins in range(50, 210, 10):
+            
+
+    # With best ang. dist. parameters, choose best clustering method and hyperparameters; repeat process.
+
+    
+if __name__ == '__main__':
+    parser = ArgumentParser(
+        description='Analyze a COLTRIMS dataset.',
+        add_help=True
+    )
+    parser.add_argument('file')
+
+    
+    
+    # analyze('D2O_momenta.dat')

@@ -5,13 +5,13 @@ import src.preprocess as preprocess
 import src.fitting as fitting
 import src.parsing as parsing
 import src.cluster as clustering
-import src.visualization
+import src.visualization as visualization
 
 import matplotlib.pyplot as plt
 
 from argparse import ArgumentParser
 
-def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method="kmeans-molecular_frame"):
+def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method="kmeans-molecular-frame"):
     k = len(np.unique(cluster_labels))
     root_dir = "privileged"
     if not os.path.isdir(root_dir):
@@ -20,8 +20,8 @@ def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method=
     dir_name = f"{clustering_method}_with_{k}_clusters_{L_max}_{bins}_{int(entropy)}"
     dir_name = os.path.join(root_dir, dir_name)
 
-    while os.path.isdir(dir_name):
-        dir_name += "_"
+    #while os.path.isdir(dir_name):
+    #    dir_name += "_"
     os.mkdir(dir_name)
     
     for cluster_label in np.unique(cluster_labels):
@@ -30,11 +30,125 @@ def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method=
         file_path = os.path.join(dir_name, file_name)
         parsing.write_momentum(file_path, cluster_data, write_headers=True)
 
-def optimal_angular_distribution_hyperparmaeters():
-    pass
+    return dir_name
 
-def optimal_k_means_hyperparameters():
-    pass
+def read_clusters(directory, has_headers=False):
+    # Cluster directories are named as follows
+    # f'{clustering-method}_with_{k}_clusters_{L_max}_{bins}_{entropy}'
+    cluster_metadata = os.path.basename(directory.strip('/\\')).split('_')
+    method, _, k, _, L_max, bins, entropy = cluster_metadata
+    
+    cluster_files = os.listdir(directory)
+
+    data = []
+    labels = []
+    for filename in cluster_files:
+        if not filename.endswith('.dat'):
+            continue
+        idx = int(filename.split('_')[1])
+        cluster_data = parsing.read_momentum(os.path.join(directory, filename), has_headers=has_headers)
+
+        N = cluster_data.shape[0]
+
+        data.append(cluster_data)
+        labels.append(idx*np.ones(N))
+
+    return np.vstack(data), np.concatenate(labels)
+
+def visualize_clusters(directory, save_kwargs={'dpi': 250}):
+    data, labels = read_clusters(directory, has_headers=True)
+
+    fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels)
+    fig.savefig(os.path.join(directory, 'electron-energy-vs-KER.png'), **save_kwargs)
+
+    fig = visualization.plot_electron_energies(data, clusters=labels)
+    fig.savefig(os.path.join(directory, 'electron-energies.png'), **save_kwargs)
+
+    fig = visualization.plot_ion_energies(data, clusters=labels)
+    fig.savefig(os.path.join(directory, 'ion-energies.png'), **save_kwargs)
+
+    fig = visualization.plot_KER_vs_angle(data, clusters=labels)
+    fig.savefig(os.path.join(directory, 'KER-vs-angle.png'), **save_kwargs)
+
+    fig = visualization.plot_electron_energy_vs_ion_energy_difference(data, clusters=labels)
+    fig.savefig(os.path.join(directory, 'electron-energy-vs-ion_energy-difference.png'), **save_kwargs)
+    
+
+def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, L_max, bin_range):
+    print('L_max: ', L_max)
+    print('Range of bin values to consider: ', bin_range)
+
+    parameters = []
+    num_clusters = len(np.unique(labels))
+
+    labels_train = labels[train_indices]
+    labels_val = labels[val_indices]
+
+    ion_data = []
+    for i in range(num_clusters):
+        ion_data.append(np.vstack((train_data[labels_train==i, 0:3], train_data[labels_train==i, 3:6])))
+
+    val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
+    val_ion_labels = np.hstack((labels_val, labels_val)).reshape(-1)
+    
+    # Choose best angular distribution hyperparameters
+    for L in range(0, L_max+1):
+        for num_bins in bin_range:
+            Bs = []
+            for i in range(num_clusters):
+                B_lms, _ = fitting.fit_Y_lms_binning_least_squares(
+                    ion_data[i], L,
+                    num_bins,
+                    only_even_Ls=False
+                )
+                Bs.append(B_lms)
+            entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False)
+            parameters.append((L, num_bins, entropy))
+            print(parameters[-1])
+
+    entropies = np.array(parameters)[:,2]
+    optimal_index = np.argmin(entropies)
+    optimal_parameters = parameters[optimal_index]
+    print("optimal_parameters = ", optimal_parameters)
+    return optimal_parameters
+
+def optimal_k_means_hyperparameters(phi, train_data, val_data, train_indices, val_indices, cluster_range, L_max, num_bins):
+    print('Range of clusters to consider: ', cluster_range)
+    
+    parameters = []
+    k_labels = []
+
+    for N in cluster_range:
+        labels, _ = clustering.k_means_clustering(phi, num_clusters=N)
+        k_labels.append(labels)
+        labels_train = labels[train_indices]
+        labels_val = labels[val_indices]
+        
+        ion_data = []
+        for i in range(N):
+            ion_data.append(np.vstack((train_data[labels_train==i, 0:3], train_data[labels_train==i, 3:6])))
+
+        val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
+        val_ion_labels = np.hstack((labels_val, labels_val)).reshape(-1)
+        
+        Bs = []
+        for i in range(N):
+            B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(
+                ion_data[i], L_max,
+                num_bins,
+                only_even_Ls=False
+            )
+            Bs.append(B_lms)
+        entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L_max, only_even_Ls=False)
+        parameters.append((N, entropy))
+        print(parameters[-1])
+
+    entropies = np.array(parameters)[:,1]
+    optimal_index = np.argmin(entropies)
+    optimal_parameters = parameters[optimal_index]
+    print("optimal_parameters = ", optimal_parameters)
+    return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
+
 
 def analyze(fileName):
     """
@@ -71,92 +185,23 @@ def analyze(fileName):
         'Number of columns is consistent between data splits.'
     assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], \
         'Number of data points is consistent between data splits.'
-    print('Got to clustering.')
+
     # Cluster one via k-means with 5 clusters
     num_clusters = 5
-    k5_labels, k5_centers = clustering.k_means_clustering(phi, num_clusters=num_clusters)
+    k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=num_clusters)
 
-    # process cluster output
-    #ion_data = np.vstack((data[:,0:3], data[:,3:6]))
-    #assert np.all(ion_data.shape == (data.shape[0]*2, 3))
-    entropies = []
-    parameters = []
-    L_max = 5
-
-    k5_labels_train = k5_labels[train_indices]
-
-    ion_data = []
-    for i in range(num_clusters):
-        ion_data.append(np.vstack((train_data[k5_labels_train==i, 0:3], train_data[k5_labels_train==i, 3:6])))
-
-    val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
-    print(val_ion_data.shape)
-    val_ion_labels = np.vstack((k5_labels[val_indices,None], k5_labels[val_indices, None])).reshape(-1)
-    print(val_ion_labels.shape)
-    print(val_ion_labels[0:10])
-    
-    # Choose best angular distribution hyperparameters
-    for L in range(0, L_max+1):
-        for num_bins in range(50, 70, 10):
-            Bs = []
-            for i in range(num_clusters):
-                B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(
-                    ion_data[i], L,
-                    num_bins,
-                    only_even_Ls=False
-                )
-                Bs.append(B_lms)
-            entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False)
-            entropies.append(entropy)
-            parameters.append((L, num_bins, entropy))
-            print(L, num_bins, entropy)
-
-    entropies = np.array(entropies)
-    optimal_index = np.argmin(entropies)
-    optimal_parameters = parameters[optimal_index]
-    print("optimal_parameters = ", optimal_parameters)
+    max_L_to_try = 6
+    bin_range = np.arange(50,160,10)
+    L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bin_range)
 
     # With best ang. dist. parameters, choose number of clusters in k-means with lowest cross_entropy.
-    entropies = []
-    parameters = []
-    found_labels = []
-    L, num_bins = optimal_parameters[:2]
-    print(L, num_bins)
-    for num in range(2, 15, 1):
-        k_labels, k_centers = clustering.k_means_clustering(phi, num_clusters=num)
-        found_labels.append(k_labels)
-        k_labels_train = k_labels[train_indices]
-
-        train_ion_data = []
-        for i in range(num):
-            train_ion_data.append(np.vstack((train_data[k_labels_train==i, 0:3], train_data[k_labels_train==i, 3:6])))
-
-        val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
-        val_ion_labels = np.vstack((k_labels[val_indices,None], k_labels[val_indices, None])).reshape(-1)
-        
-        Bs = []
-        for i in range(num):
-            B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(
-                train_ion_data[i], L,
-                num_bins,
-                only_even_Ls=False
-            )
-            Bs.append(B_lms)
-        entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False)
-        entropies.append(entropy)
-        parameters.append((num, entropy))
-        print(num, entropy)
-
-    entropies = np.array(entropies)
-    optimal_index = np.argmin(entropies)
-    optimal_parameters = parameters[optimal_index]
-    print("optimal_parameters = ", optimal_parameters)
+    cluster_range = np.arange(2,8)
+    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, train_data, test_data, train_indices, test_indices, cluster_range, L_max, num_bins)    
+    #save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
     
-    save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
+    directory = save_clusters(k_labels, data, L_max, num_bins, entropy, clustering_method="kmeans-molecular-frame")
+    visualize_clusters(directory)
 
-    parameters = np.array(parameters)
-    plt.plot(parameters[:,0], parameters[:,1])
-    plt.show()
 
 if __name__ == '__main__':
     parser = ArgumentParser(
@@ -165,7 +210,7 @@ if __name__ == '__main__':
     )
     parser.add_argument('file', help='Path to the COLTRIMS datafile.')
     parser.add_argument('-c', '--config', help='Path to configuration file.')
-    
+
     args = parser.parse_args()
 
     analyze(args.file)

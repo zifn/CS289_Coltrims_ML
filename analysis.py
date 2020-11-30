@@ -20,8 +20,8 @@ def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method=
     dir_name = f"{clustering_method}_with_{k}_clusters_{L_max}_{bins}_{int(entropy)}"
     dir_name = os.path.join(root_dir, dir_name)
 
-    #while os.path.isdir(dir_name):
-    #    dir_name += "_"
+    while os.path.isdir(dir_name):
+        dir_name += "_"
     os.mkdir(dir_name)
     
     for cluster_label in np.unique(cluster_labels):
@@ -60,19 +60,23 @@ def visualize_clusters(directory, save_kwargs={'dpi': 250}):
 
     fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels)
     fig.savefig(os.path.join(directory, 'electron-energy-vs-KER.png'), **save_kwargs)
+    plt.close(fig)
 
     fig = visualization.plot_electron_energies(data, clusters=labels)
     fig.savefig(os.path.join(directory, 'electron-energies.png'), **save_kwargs)
+    plt.close(fig)
 
     fig = visualization.plot_ion_energies(data, clusters=labels)
     fig.savefig(os.path.join(directory, 'ion-energies.png'), **save_kwargs)
+    plt.close(fig)
 
     fig = visualization.plot_KER_vs_angle(data, clusters=labels)
     fig.savefig(os.path.join(directory, 'KER-vs-angle.png'), **save_kwargs)
+    plt.close(fig)
 
     fig = visualization.plot_electron_energy_vs_ion_energy_difference(data, clusters=labels)
     fig.savefig(os.path.join(directory, 'electron-energy-vs-ion_energy-difference.png'), **save_kwargs)
-    
+    plt.close(fig)
 
 def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, L_max, bin_range):
     print('L_max: ', L_max)
@@ -110,9 +114,12 @@ def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, t
     optimal_index = np.argmin(entropies)
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
+    
+    file_path = os.path.join("privileged", "kmeans-molecular-frame_optimal_parameters.csv")
+    np.savetxt(file_path, np.array(parameters), header="L, num_bins, cross_entropy")
     return optimal_parameters
 
-def optimal_k_means_hyperparameters(phi, train_data, val_data, train_indices, val_indices, cluster_range, L_max, num_bins):
+def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, cluster_range, L_max, num_bins, save=True):
     print('Range of clusters to consider: ', cluster_range)
     
     parameters = []
@@ -123,6 +130,7 @@ def optimal_k_means_hyperparameters(phi, train_data, val_data, train_indices, va
         k_labels.append(labels)
         labels_train = labels[train_indices]
         labels_val = labels[val_indices]
+        
         
         ion_data = []
         for i in range(N):
@@ -141,12 +149,17 @@ def optimal_k_means_hyperparameters(phi, train_data, val_data, train_indices, va
             Bs.append(B_lms)
         entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L_max, only_even_Ls=False)
         parameters.append((N, entropy))
+        directory = save_clusters(labels, data, L_max, num_bins, entropy, clustering_method="kmeans-molecular-frame")
+        visualize_clusters(directory)
         print(parameters[-1])
 
     entropies = np.array(parameters)[:,1]
     optimal_index = np.argmin(entropies)
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
+    
+    file_path = os.path.join("privileged", "kmeans-molecular-frame_k_vs_cross_entropy.csv")
+    np.savetxt(file_path, np.array(parameters), header="k, cross_entropy")
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
 
@@ -195,8 +208,8 @@ def analyze(fileName):
     L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bin_range)
 
     # With best ang. dist. parameters, choose number of clusters in k-means with lowest cross_entropy.
-    cluster_range = np.arange(2,8)
-    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, train_data, test_data, train_indices, test_indices, cluster_range, L_max, num_bins)    
+    cluster_range = np.arange(2,20)
+    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, cluster_range, L_max, num_bins)    
     #save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
     
     directory = save_clusters(k_labels, data, L_max, num_bins, entropy, clustering_method="kmeans-molecular-frame")

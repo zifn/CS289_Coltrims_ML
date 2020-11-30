@@ -45,7 +45,7 @@ def analyze(fileName):
     k5_labels = clustering.k_means_clustering(phi, 5)
 
     # Choose best angular distribution hyperparameters
-    ion_data = 
+    # ion_data = 
     for L in range(0, L_max+1):
         for num_bins in range(50, 210, 10):
             
@@ -60,6 +60,8 @@ if __name__ == '__main__':
     )
     parser.add_argument('file')
 
-    
+    args = parser.parse_args()
+
+    print(args)
     
     # analyze('D2O_momenta.dat')

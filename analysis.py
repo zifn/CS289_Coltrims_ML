@@ -1,12 +1,27 @@
+import os
 import numpy as np
 
 import src.preprocess as preprocess
 import src.fitting as fitting
 import src.parsing as parsing
 import src.cluster as clustering
-#import src.visualization   # Doesn't exist till Larry pushes branch.
+import src.visualization
 
 from argparse import ArgumentParser
+
+def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method="kmeans-molecular_frame"):
+    k = len(np.unique(cluster_labels))
+    dir_name = f"{clustering_method}_with_{k}_clusters_{L_max}_{bins}_{int(entropy)}"
+    cluster_data = data[cluster_labels == cluster_label]
+    
+    while os.path.isdir(dir_name):
+        dir_name += "_"
+    os.mkdir(dir_name)
+    
+    for cluster_label in np.unique(cluster_labels):
+        file_name = f"cluster_{cluster_label}_of_{k}"
+        file_path = os.path.join(dir_name, file_name)
+        parsing.write_momentum(file_path, cluster_data, write_headers=True)
 
 def analyze(fileName):
     """
@@ -27,7 +42,7 @@ def analyze(fileName):
     #    of the involved scattering constituents.
     """
     data = parsing.read_momentum(fileName)
-    data = preprocess.molecular_frame(data[:10000, :])
+    data = preprocess.molecular_frame(data[:, :])
     print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
     phi = preprocess.generate_feature_matrix(data)
     
@@ -82,7 +97,6 @@ def analyze(fileName):
             entropies.append(entropy)
             parameters.append((L, num_bins, entropy))
             print(L, num_bins, entropy)
-
 
     entropies = np.array(entropies)
     optimal_index = np.argmin(entropies)

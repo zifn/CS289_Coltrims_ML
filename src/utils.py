@@ -75,6 +75,22 @@ def ejection_angle(px1, py1, pz1, px2, py2, pz2, cos=False):
     return ca if cos else np.arccos(ca)
 
 def extract_data(dataset):
+    """
+    Utility function to extract the momentums for each particle in the COLTRIMS
+    dataset from an entry in the dataset. Takes a numpy array or dataset and
+    returns a tuple of numpy arrays corresponding to each particle.
+
+    Parameters
+    ------------
+    dataset : array or dataframe
+        A numpy array or dataframe containing the COLTRIMS data
+
+    Returns
+    --------
+    tuple of arrays
+        Returns a tuple of numpy arrays corresponding to the xyz momentums of
+        each particle.
+    """
     if isinstance(dataset, pd.DataFrame):
         dataset = dataset.to_numpy()
 

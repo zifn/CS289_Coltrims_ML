@@ -11,52 +11,8 @@ import matplotlib.pyplot as plt
 
 from argparse import ArgumentParser
 
-def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method="kmeans-molecular-frame"):
-    k = len(np.unique(cluster_labels))
-    root_dir = "privileged"
-    if not os.path.isdir(root_dir):
-        os.mkdir(root_dir)
-
-    dir_name = f"{clustering_method}_with_{k}_clusters_{L_max}_{bins}_{int(entropy)}"
-    dir_name = os.path.join(root_dir, dir_name)
-
-    while os.path.isdir(dir_name):
-        dir_name += "_"
-    os.mkdir(dir_name)
-    
-    for cluster_label in np.unique(cluster_labels):
-        cluster_data = data[cluster_labels == cluster_label]
-        file_name = f"cluster_{cluster_label}_of_{k}.dat"
-        file_path = os.path.join(dir_name, file_name)
-        parsing.write_momentum(file_path, cluster_data, write_headers=True)
-
-    return dir_name
-
-def read_clusters(directory, has_headers=False):
-    # Cluster directories are named as follows
-    # f'{clustering-method}_with_{k}_clusters_{L_max}_{bins}_{entropy}'
-    cluster_metadata = os.path.basename(directory.strip('/\\')).split('_')
-    method, _, k, _, L_max, bins, entropy = cluster_metadata
-    
-    cluster_files = os.listdir(directory)
-
-    data = []
-    labels = []
-    for filename in cluster_files:
-        if not filename.endswith('.dat'):
-            continue
-        idx = int(filename.split('_')[1])
-        cluster_data = parsing.read_momentum(os.path.join(directory, filename), has_headers=has_headers)
-
-        N = cluster_data.shape[0]
-
-        data.append(cluster_data)
-        labels.append(idx*np.ones(N))
-
-    return np.vstack(data), np.concatenate(labels)
-
 def visualize_clusters(directory, save_kwargs={'dpi': 250}):
-    data, labels = read_clusters(directory, has_headers=True)
+    data, labels = parsing.read_clusters(directory, has_headers=True)
 
     fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels)
     fig.savefig(os.path.join(directory, 'electron-energy-vs-KER.png'), **save_kwargs)
@@ -149,7 +105,8 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
             Bs.append(B_lms)
         entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L_max, only_even_Ls=False)
         parameters.append((N, entropy))
-        directory = save_clusters(labels, data, L_max, num_bins, entropy, clustering_method="kmeans-molecular-frame")
+        directory = parsing.save_clusters(labels, data, L_max, num_bins, entropy, method="kmeans-molecular-frame")
+        print(directory)
         visualize_clusters(directory)
         print(parameters[-1])
 
@@ -204,15 +161,15 @@ def analyze(fileName):
     k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=num_clusters)
 
     max_L_to_try = 6
-    bin_range = np.arange(50,160,10)
+    bin_range = np.arange(50,100,10)
     L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bin_range)
 
     # With best ang. dist. parameters, choose number of clusters in k-means with lowest cross_entropy.
-    cluster_range = np.arange(2,20)
+    cluster_range = np.arange(2,7)
     num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, cluster_range, L_max, num_bins)    
     #save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
     
-    directory = save_clusters(k_labels, data, L_max, num_bins, entropy, clustering_method="kmeans-molecular-frame")
+    directory = parsing.save_clusters(k_labels, data, L_max, num_bins, entropy, method="kmeans-molecular-frame")
     visualize_clusters(directory)
 
 

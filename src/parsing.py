@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import numpy as np
 
@@ -82,3 +84,47 @@ def write_momentum(output_file_path, momentum, write_headers=False,
             momentum.to_csv(output_file_path, sep=" ", header=headers, index=False)
         else:
             momentum.to_csv(output_file_path, sep=" ", header=False, index=False)
+
+def save_clusters(labels, data, L_max, bins, entropy, method="kmeans-molecular-frame"):
+    k = len(np.unique(labels))
+    root_dir = "privileged"
+    if not os.path.isdir(root_dir):
+        os.mkdir(root_dir)
+
+    dir_name = f"{method}_with_{k}_clusters_{L_max}_{bins}_{int(entropy)}"
+    dir_name = os.path.join(root_dir, dir_name)
+
+    while os.path.isdir(dir_name):
+        dir_name += "_"
+    os.mkdir(dir_name)
+    
+    for label in np.unique(labels):
+        cluster_data = data[labels == label]
+        file_name = f"cluster_{label}_of_{k}.dat"
+        file_path = os.path.join(dir_name, file_name)
+        write_momentum(file_path, cluster_data, write_headers=True)
+
+    return dir_name
+
+def read_clusters(directory, has_headers=False):
+    # Cluster directories are named as follows
+    # f'{clustering-method}_with_{k}_clusters_{L_max}_{bins}_{entropy}'
+    cluster_metadata = os.path.basename(directory.strip('_/\\')).split('_')
+    method, _, k, _, L_max, bins, entropy = cluster_metadata
+    
+    cluster_files = os.listdir(directory)
+
+    data = []
+    labels = []
+    for filename in cluster_files:
+        if not filename.endswith('.dat'):
+            continue
+        idx = int(filename.split('_')[1])
+        cluster_data = read_momentum(os.path.join(directory, filename), has_headers=has_headers)
+
+        N = cluster_data.shape[0]
+
+        data.append(cluster_data)
+        labels.append(idx*np.ones(N))
+
+    return np.vstack(data), np.concatenate(labels)

@@ -6,6 +6,8 @@ import src.parsing as parsing
 import src.cluster as clustering
 #import src.visualization   # Doesn't exist till Larry pushes branch.
 
+import matplotlib.pyplot as plt
+
 from argparse import ArgumentParser
 
 def analyze(fileName):
@@ -49,8 +51,8 @@ def analyze(fileName):
     k5_labels, k5_centers = clustering.k_means_clustering(phi, num_clusters=num_clusters)
 
     # process cluster output
-    ion_data = np.vstack((data[:,0:3], data[:,3:6]))
-    assert np.all(ion_data.shape == (data.shape[0]*2, 3))
+    #ion_data = np.vstack((data[:,0:3], data[:,3:6]))
+    #assert np.all(ion_data.shape == (data.shape[0]*2, 3))
     entropies = []
     parameters = []
     L_max = 5
@@ -69,7 +71,7 @@ def analyze(fileName):
     
     # Choose best angular distribution hyperparameters
     for L in range(0, L_max+1):
-        for num_bins in range(50, 210, 10):
+        for num_bins in range(50, 70, 10):
             Bs = []
             for i in range(num_clusters):
                 B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(
@@ -89,8 +91,43 @@ def analyze(fileName):
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
 
-    # With best ang. dist. parameters, choose best clustering method and hyperparameters; repeat process.
+    # With best ang. dist. parameters, choose number of clusters in k-means with lowest cross_entropy.
+    entropies = []
+    parameters = []
+    L, num_bins = optimal_parameters[:2]
+    print(L, num_bins)
+    for num in range(2, 15, 1):
+        k_labels, k_centers = clustering.k_means_clustering(phi, num_clusters=num)
+        k_labels_train = k_labels[train_indices]
 
+        train_ion_data = []
+        for i in range(num):
+            train_ion_data.append(np.vstack((train_data[k_labels_train==i, 0:3], train_data[k_labels_train==i, 3:6])))
+
+        val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
+        val_ion_labels = np.vstack((k_labels[val_indices,None], k_labels[val_indices, None])).reshape(-1)
+        
+        Bs = []
+        for i in range(num):
+            B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(
+                train_ion_data[i], L,
+                num_bins,
+                only_even_Ls=False
+            )
+            Bs.append(B_lms)
+        entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False)
+        entropies.append(entropy)
+        parameters.append((num, entropy))
+        print(num, entropy)
+
+    entropies = np.array(entropies)
+    optimal_index = np.argmin(entropies)
+    optimal_parameters = parameters[optimal_index]
+    print("optimal_parameters = ", optimal_parameters)
+    
+    parameters = np.array(parameters)
+    plt.plot(parameters[:,0], parameters[:,1])
+    plt.show()
 
 if __name__ == '__main__':
     parser = ArgumentParser(

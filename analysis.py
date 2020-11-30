@@ -185,7 +185,7 @@ def analyze(fileName):
     data = preprocess.molecular_frame(data[:, :])
     print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
     phi = preprocess.generate_feature_matrix(data)
-    phi = whiten_data(phi)
+    phi = preprocess.whiten_data(phi)
     
     indices = np.arange(data.shape[0])
     train_indices, test_val_indices = preprocess.data_split(indices, .70, 23)

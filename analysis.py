@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 
 def analyze(fileName):
     data = parsing.read_momentum(fileName)
+    data = data[:10000, :]
     print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
     phi = preprocess.generate_feature_matrix(data)
     ################################################################################
@@ -41,7 +42,7 @@ def analyze(fileName):
         'Number of columns is consistent between data splits.'
     assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], \
         'Number of data points is consistent between data splits.'
-    print('Got to here.')
+    print('Got to clustering.')
     # Cluster one via k-means with 5 clusters
     num_clusters = 5
     k5_labels, k5_centers = clustering.k_means_clustering(phi, num_clusters=num_clusters)
@@ -53,29 +54,34 @@ def analyze(fileName):
     parameters = []
     L_max = 2
 
+    k5_labels_train = k5_labels[train_indices]
+
     ion_data = []
     for i in range(num_clusters):
-        ion_data.append(np.vstack((data[train_indices==i, 0:3], data[train_indices==i, 3:6])))
+        ion_data.append(np.vstack((train_data[k5_labels_train==i, 0:3], train_data[k5_labels_train==i, 3:6])))
 
     val_ion_data = np.vstack((val_data[:,0:3], val_data[:,3:6]))
-    val_ion_labels = np.vstack((k5_labels[val_indices], k5_labels[val_indices]))
-
+    print(val_ion_data.shape)
+    val_ion_labels = np.vstack((k5_labels[val_indices,None], k5_labels[val_indices, None]))
+    print(val_ion_labels.shape)
+    print(val_ion_labels[0:10])
+    
     for L in range(0, L_max+1):
         for num_bins in range(50, 110, 10):
             print(L, num_bins)
             Bs = []
             for i in range(num_clusters):
-                B_lms, lm_order = fit_Y_lms_binning_least_squares(
+                B_lms, lm_order = fitting.fit_Y_lms_binning_least_squares(
                     ion_data[i], L,
                     num_bins,
                     only_even_Ls=False
                 )
                 Bs.append(B_lms)
-            entropy.append(validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False))
+            entropies.append(fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L, only_even_Ls=False))
             parameters.append((L, num_bins))
 
-    entropy = np.array(entropy)
-    optimal_index = np.argmin(entropy)
+    entropies = np.array(entropies)
+    optimal_index = np.argmin(entropies)
     optimal_parameters = parameters[optimal_index]
     print(optimal_parameters)
 

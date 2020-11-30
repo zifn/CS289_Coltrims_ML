@@ -13,17 +13,28 @@ from argparse import ArgumentParser
 
 def save_clusters(cluster_labels, data, L_max, bins, entropy, clustering_method="kmeans-molecular_frame"):
     k = len(np.unique(cluster_labels))
+    root_dir = "privileged"
+    if not os.path.isdir(root_dir):
+        os.mkdir(root_dir)
+
     dir_name = f"{clustering_method}_with_{k}_clusters_{L_max}_{bins}_{int(entropy)}"
-    cluster_data = data[cluster_labels == cluster_label]
-    
+    dir_name = os.path.join(root_dir, dir_name)
+
     while os.path.isdir(dir_name):
         dir_name += "_"
     os.mkdir(dir_name)
     
     for cluster_label in np.unique(cluster_labels):
-        file_name = f"cluster_{cluster_label}_of_{k}"
+        cluster_data = data[cluster_labels == cluster_label]
+        file_name = f"cluster_{cluster_label}_of_{k}.dat"
         file_path = os.path.join(dir_name, file_name)
         parsing.write_momentum(file_path, cluster_data, write_headers=True)
+
+def optimal_angular_distribution_hyperparmaeters():
+    pass
+
+def optimal_k_means_hyperparameters():
+    pass
 
 def analyze(fileName):
     """
@@ -44,7 +55,7 @@ def analyze(fileName):
     #    of the involved scattering constituents.
     """
     data = parsing.read_momentum(fileName)
-    data = preprocess.molecular_frame(data[:, :])
+    data = preprocess.molecular_frame(data[:10000, :])
     print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
     phi = preprocess.generate_feature_matrix(data)
     
@@ -108,10 +119,12 @@ def analyze(fileName):
     # With best ang. dist. parameters, choose number of clusters in k-means with lowest cross_entropy.
     entropies = []
     parameters = []
+    found_labels = []
     L, num_bins = optimal_parameters[:2]
     print(L, num_bins)
     for num in range(2, 15, 1):
         k_labels, k_centers = clustering.k_means_clustering(phi, num_clusters=num)
+        found_labels.append(k_labels)
         k_labels_train = k_labels[train_indices]
 
         train_ion_data = []
@@ -139,6 +152,8 @@ def analyze(fileName):
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
     
+    save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
+
     parameters = np.array(parameters)
     plt.plot(parameters[:,0], parameters[:,1])
     plt.show()

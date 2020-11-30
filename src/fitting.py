@@ -195,7 +195,8 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     data_val_sph = cart_to_spherical(data_val_xyz)
 
     unique_labels = np.unique(labels)
-    assert set(list(unique_labels)) == set(range(len(model_params)))
+    assert  set(range(len(model_params))) in set(list(unique_labels))
+    assert unique_labels.shape[0] == len(model_params) or unique_labels.shape[0] == len(model_params) + 1
     unique_labels = list(range(len(model_params)))
 
     # make qs

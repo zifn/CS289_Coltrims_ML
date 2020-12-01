@@ -202,15 +202,14 @@ if __name__ == '__main__':
     for key in cfg.keys():
         cfg[key] = getattr(args, key) or cfg[key]
     
-    # analyze(
-    #     args.datafile,
-    #     initial_clusters=cfg['clusters_init'],
-    #     clusters_to_try=np.arange(
-    #         cfg['clusters_min'], cfg['clusters_max'] + 1, cfg['clusters_step']
-    #     ),
-    #     bins_to_try=np.arange(
-    #         cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
-    #     ),
-    #     max_L_to_try=cfg['L']
-    # )
-    visualize_clusters('privileged/kmeans-molecular-frame_with_5_clusters_4_60_3545270')
+    analyze(
+        args.datafile,
+        initial_clusters=cfg['clusters_init'],
+        clusters_to_try=np.arange(
+            cfg['clusters_min'], cfg['clusters_max'] + 1, cfg['clusters_step']
+        ),
+        bins_to_try=np.arange(
+            cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
+        ),
+        max_L_to_try=cfg['L']
+    )

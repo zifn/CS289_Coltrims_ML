@@ -21,5 +21,32 @@ python -m pip install -r requirements.txt
 To run the analysis code,
 
 ```
-python analysis.py [path_to_data_file]
+python analysis.py
+
+usage: analysis.py [-h] [-c CONFIG] [--cinit CLUSTERS_INIT]
+                   [--cmin CLUSTERS_MIN] [--cmax CLUSTERS_MAX]
+                   [--cstep CLUSTERS_STEP] [--bmin BINS_MIN] [--bmax BINS_MAX]
+                   [--bstep BINS_STEP] [-L L]
+                   datafile
+
+Analyze a COLTRIMS dataset.
+
+positional arguments:
+  datafile              Path to the COLTRIMS datafile.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        Path to configuration file.
+  --cinit CLUSTERS_INIT
+                        The initial number of clusters to use.
+  --cmin CLUSTERS_MIN   The minimum cluster size.
+  --cmax CLUSTERS_MAX   The maximum cluster size.
+  --cstep CLUSTERS_STEP
+                        The step size for the cluster grid search.
+  --bmin BINS_MIN       The minimum bin size.
+  --bmax BINS_MAX       The maximum bin size.
+  --bstep BINS_STEP     The step size for the bin size grid search
+  -L L                  The largest Lmax to try.
 ```
+

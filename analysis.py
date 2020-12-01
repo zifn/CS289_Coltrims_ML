@@ -1,4 +1,6 @@
 import os
+import yaml
+
 import numpy as np
 
 import src.preprocess as preprocess
@@ -120,7 +122,7 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
 
-def analyze(fileName):
+def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_try):
     """
     # PREPROCESSING
     # 1. Split data into training, validation, and testing splits of 70%, 15%, 15%.
@@ -138,9 +140,9 @@ def analyze(fileName):
     #    features to be physically relavent as these are used to calculate energies
     #    of the involved scattering constituents.
     """
-    data = parsing.read_momentum(fileName)
+    data = parsing.read_momentum(filename)
     data = preprocess.molecular_frame(data[:10000, :])
-    print('Data read from file ' + fileName + ' has shape ' + str(data.shape) + '.')
+    print(f"Data read from file {filename} has shape {str(data.shape)}.")
     phi = preprocess.generate_feature_matrix(data)
     
     indices = np.arange(data.shape[0])
@@ -152,21 +154,21 @@ def analyze(fileName):
     test_data = data[test_indices, :]
 
     assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1], \
-        'Number of columns is consistent between data splits.'
+        "Number of columns is consistent between data splits."
     assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], \
-        'Number of data points is consistent between data splits.'
+        "Number of data points is consistent between data splits."
 
     # Cluster one via k-means with 5 clusters
-    num_clusters = 5
-    k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=num_clusters)
+    # num_clusters = 5
+    k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=initial_clusters)
 
-    max_L_to_try = 6
-    bin_range = np.arange(50,100,10)
-    L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bin_range)
+    # max_L_to_try = 6
+    # bin_range = np.arange(50,100,10)
+    L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bins_to_try)
 
     # With best ang. dist. parameters, choose number of clusters in k-means with lowest cross_entropy.
-    cluster_range = np.arange(2,7)
-    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, cluster_range, L_max, num_bins)    
+    # cluster_range = np.arange(2,7)
+    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, L_max, num_bins)    
     #save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
     
     directory = parsing.save_clusters(k_labels, data, L_max, num_bins, entropy, method="kmeans-molecular-frame")
@@ -178,9 +180,36 @@ if __name__ == '__main__':
         description='Analyze a COLTRIMS dataset.',
         add_help=True
     )
-    parser.add_argument('file', help='Path to the COLTRIMS datafile.')
-    parser.add_argument('-c', '--config', help='Path to configuration file.')
+    parser.add_argument('datafile', help='Path to the COLTRIMS datafile.')
+    parser.add_argument('-c', '--config', help='Path to configuration file.', default='defaults.yml')
+
+    parser.add_argument('--cinit', dest='clusters_init', help='The initial number of clusters to use.')
+    parser.add_argument('--cmin', dest='clusters_min', help='The minimum cluster size.')
+    parser.add_argument('--cmax', dest='clusters_max', help='The maximum cluster size.')
+    parser.add_argument('--cstep', dest='clusters_step', help='The step size for the cluster grid search.')
+
+    parser.add_argument('--bmin', dest='bins_min', help='The minimum bin size.')
+    parser.add_argument('--bmax', dest='bins_max', help='The maximum bin size.')
+    parser.add_argument('--bstep', dest='bins_step', help='The step size for the bin size grid search')
+
+    parser.add_argument('-L', dest='L', help='The largest Lmax to try.')
 
     args = parser.parse_args()
 
-    analyze(args.file)
+    with open(args.config, 'r') as stream:
+        cfg = yaml.load(stream, yaml.Loader)
+
+    for key in cfg.keys():
+        cfg[key] = getattr(args, key) or cfg[key]
+    
+    analyze(
+        args.datafile,
+        initial_clusters=cfg['clusters_init'],
+        clusters_to_try=np.arange(
+            cfg['clusters_min'], cfg['clusters_max'] + 1, cfg['clusters_step']
+        ),
+        bins_to_try=np.arange(
+            cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
+        ),
+        max_L_to_try=cfg['L']
+    )

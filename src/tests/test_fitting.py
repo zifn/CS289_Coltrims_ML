@@ -55,6 +55,8 @@ def test_fit_Y_lms_va_binning():
                     continue
                 for _ in range(L+1):
                     sample_B_lms.append(rng.normal())
+                for _ in range(-L, 0):
+                    sample_B_lms.append(rng.normal())
             sample_B_lms[0] = 3
             if not rand_dist:
                 sample_B_lms = len(sample_B_lms)*[0]

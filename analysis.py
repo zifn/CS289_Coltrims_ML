@@ -158,18 +158,11 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], \
         "Number of data points is consistent between data splits."
 
-    # Cluster one via k-means with 5 clusters
-    # num_clusters = 5
     k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=initial_clusters)
 
-    # max_L_to_try = 6
-    # bin_range = np.arange(50,100,10)
     L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bins_to_try)
 
-    # With best ang. dist. parameters, choose number of clusters in k-means with lowest cross_entropy.
-    # cluster_range = np.arange(2,7)
-    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, L_max, num_bins)    
-    #save_clusters(found_labels[optimal_index], data, L, num_bins, entropies[optimal_index], clustering_method="kmeans-molecular_frame")
+    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, L_max, num_bins)
     
     directory = parsing.save_clusters(k_labels, data, L_max, num_bins, entropy, method="kmeans-molecular-frame")
     visualize_clusters(directory)

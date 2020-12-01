@@ -15,7 +15,7 @@ Analysis file is 'analysis.py' with source files found in 'src/' and testing fil
 To install all required dependencies, run
 
 ```
-python -m pip install -r requirements.txt
+user@machine:~/project_repo$ python -m pip install -r requirements.txt
 ```
 
 - matplotlib>=3.1.1
@@ -29,7 +29,7 @@ python -m pip install -r requirements.txt
 To run the analysis code:
 
 ```
-python analysis.py
+user@machine:~/project_repo$ python analysis.py
 
 usage: analysis.py [-h] [-c CONFIG] [--cinit CLUSTERS_INIT]
                    [--cmin CLUSTERS_MIN] [--cmax CLUSTERS_MAX]
@@ -60,14 +60,14 @@ optional arguments:
 
 To analysis the random data set with default settings:
 ```
-user@machine$ python analysis.py RANDOM_DATASET.dat
+user@machine:~/project_repo$ python analysis.py RANDOM_DATASET.dat
 ```
 
 ## Pylint and Pytest
 Tests of the source functions can be run from the root project directory by: 
 
 ```
-user@machine$ pytest
+user@machine:~/project_repo$ pytest
 ```
 
 We conform to Pylint specifications for the source and testing files.

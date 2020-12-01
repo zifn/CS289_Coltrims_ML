@@ -16,23 +16,23 @@ from argparse import ArgumentParser
 def visualize_clusters(directory, save_kwargs={'dpi': 250}):
     data, labels = parsing.read_clusters(directory, has_headers=True)
 
-    fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels)
+    fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels, bins=50)
     fig.savefig(os.path.join(directory, 'electron-energy-vs-KER.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_electron_energies(data, clusters=labels)
+    fig = visualization.plot_electron_energies(data, clusters=labels, bins=50)
     fig.savefig(os.path.join(directory, 'electron-energies.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_ion_energies(data, clusters=labels)
+    fig = visualization.plot_ion_energies(data, clusters=labels, bins=50)
     fig.savefig(os.path.join(directory, 'ion-energies.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_KER_vs_angle(data, clusters=labels)
+    fig = visualization.plot_KER_vs_angle(data, clusters=labels, bins=50)
     fig.savefig(os.path.join(directory, 'KER-vs-angle.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_electron_energy_vs_ion_energy_difference(data, clusters=labels)
+    fig = visualization.plot_electron_energy_vs_ion_energy_difference(data, clusters=labels, bins=50)
     fig.savefig(os.path.join(directory, 'electron-energy-vs-ion_energy-difference.png'), **save_kwargs)
     plt.close(fig)
 
@@ -202,14 +202,15 @@ if __name__ == '__main__':
     for key in cfg.keys():
         cfg[key] = getattr(args, key) or cfg[key]
     
-    analyze(
-        args.datafile,
-        initial_clusters=cfg['clusters_init'],
-        clusters_to_try=np.arange(
-            cfg['clusters_min'], cfg['clusters_max'] + 1, cfg['clusters_step']
-        ),
-        bins_to_try=np.arange(
-            cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
-        ),
-        max_L_to_try=cfg['L']
-    )
+    # analyze(
+    #     args.datafile,
+    #     initial_clusters=cfg['clusters_init'],
+    #     clusters_to_try=np.arange(
+    #         cfg['clusters_min'], cfg['clusters_max'] + 1, cfg['clusters_step']
+    #     ),
+    #     bins_to_try=np.arange(
+    #         cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
+    #     ),
+    #     max_L_to_try=cfg['L']
+    # )
+    visualize_clusters('privileged/kmeans-molecular-frame_with_5_clusters_4_60_3545270')

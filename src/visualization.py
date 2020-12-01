@@ -2,6 +2,8 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+from itertools import product
+
 from .utils import (
     extract_data,
     kinetic_energy,
@@ -57,7 +59,7 @@ def plot_data(x, y, clusters=None, colors=None, **kwargs):
 
     return fig, ax
 
-def plot_2d_histogram(x, y, bins, **kwargs):
+def plot_2d_histogram(x, y, clusters=None, bins=None,**kwargs):
     """
     Function to plot a 2D histogram of the COLTRIMS data. Takes two arrays of
     computed values, bins them, and plots the 2D bins along the x and y axes as
@@ -82,10 +84,26 @@ def plot_2d_histogram(x, y, bins, **kwargs):
     tuple
         A tuple (fig, ax) containing the resulting matplotlib figure and axes.
     """
-    fig, ax = plt.subplots()
-    ax.hist2d(x, y, bins=bins, **kwargs)
+    if clusters is not None:
+        labels = np.unique(clusters)
+        n = np.ceil(np.sqrt(labels.shape[0])).astype(int)
 
-    return fig, ax
+        fig, axes = plt.subplots(n, n, figsize=n*np.array((5, 3)))
+    else:
+        clusters = np.zeros(len(x))
+        labels = [0]
+
+        fig, ax = plt.subplots()
+        axes = np.array([ax])
+
+    idxs = product(*[range(m) for m in axes.shape])
+
+    for label, idx in zip(labels, idxs):
+        x_i = x[clusters == label]
+        y_i = y[clusters == label]
+        axes[idx].hist2d(x_i, y_i, bins=bins, **kwargs)
+
+    return fig, axes
 
 def format_plot(plot, xlabel='', ylabel='', title=''):
     """
@@ -108,11 +126,17 @@ def format_plot(plot, xlabel='', ylabel='', title=''):
     figure
         A matplotlib figure containing the resulting plot.
     """
-    fig, ax = plot
+    fig, axes = plot
 
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    if not isinstance(axes, np.ndarray):
+        axes = np.array([axes])
+
+    for idx in product(*[range(n) for n in axes.shape]):
+        axes[idx].set_xlabel(xlabel)
+        axes[idx].set_ylabel(ylabel)
+        axes[idx].set_title(title)
+
+    fig.tight_layout()
 
     return fig
 
@@ -148,7 +172,7 @@ def plot_electron_energy_vs_KER(dataset, clusters=None, bins=None, **kwargs):
     KER = sum(energies)
 
     if bins:
-        plot = plot_2d_histogram(electron_sum, KER, bins, **kwargs)
+        plot = plot_2d_histogram(electron_sum, KER, clusters, bins, **kwargs)
     else:
         plot = plot_data(electron_sum, KER, clusters, **kwargs)
 
@@ -183,7 +207,7 @@ def plot_electron_energies(dataset, clusters=None, bins=None, **kwargs):
     energy2 = kinetic_energy(*e2.T, ELECTRON_MASS)
 
     if bins:
-        plot = plot_2d_histogram(energy1, energy2, bins, **kwargs)
+        plot = plot_2d_histogram(energy1, energy2, clusters, bins, **kwargs)
     else:
         plot = plot_data(energy1, energy2, clusters, **kwargs)
 
@@ -218,7 +242,7 @@ def plot_ion_energies(dataset, clusters=None, bins=None, **kwargs):
     energy2 = kinetic_energy(*ion2.T, DEUTERON_MASS)
 
     if bins:
-        plot = plot_2d_histogram(energy1, energy2, bins, **kwargs)
+        plot = plot_2d_histogram(energy1, energy2, clusters, bins, **kwargs)
     else:
         plot = plot_data(energy1, energy2, clusters, **kwargs)
 
@@ -262,7 +286,7 @@ def plot_KER_vs_angle(dataset, clusters=None, bins=None, cos=False, **kwargs):
     angles = ejection_angle(*ion1.T, *ion2.T, cos=cos)
 
     if bins:
-        plot = plot_2d_histogram(KER, angles, bins, **kwargs)
+        plot = plot_2d_histogram(KER, angles, clusters, bins, **kwargs)
     else:
         plot = plot_data(KER, angles, clusters, **kwargs)
 
@@ -305,7 +329,7 @@ def plot_electron_energy_vs_ion_energy_difference(
     ion_difference = np.abs(energies[3] - energies[4])
 
     if bins:
-        plot = plot_2d_histogram(electron_sum, ion_difference, bins, **kwargs)
+        plot = plot_2d_histogram(electron_sum, ion_difference, clusters, bins, **kwargs)
     else:
         plot = plot_data(electron_sum, ion_difference, clusters, **kwargs)
 

@@ -4,8 +4,10 @@ import pandas as pd
 ELECTRON_MASS = 510.99895000e3 # eV
 ATOMIC_MASS = 931.49410242e6 # eV
 
-DEUTERON_MASS = 2.01410177811 * ATOMIC_MASS
-OXYGEN_MASS = 15.999 * ATOMIC_MASS
+ELECTRON_MASS /= ATOMIC_MASS # Use atomic mass as units.
+
+DEUTERON_MASS = 2.01410177811 # a.u.
+OXYGEN_MASS = 15.999 # a.u.
 
 def kinetic_energy(px, py, pz, mass):
     """

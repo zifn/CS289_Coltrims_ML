@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from argparse import ArgumentParser
 
-def visualize_clusters(directory, bins=100, plot_kwargs={}, save_kwargs={'dpi': 250, 'bbox_inches': 'tight'}):
+def visualize_clusters(directory, bins=None, plot_kwargs={}, save_kwargs={'dpi': 250, 'bbox_inches': 'tight'}):
     data, labels = parsing.read_clusters(directory, has_headers=True)
 
     fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels, bins=bins, **plot_kwargs)
@@ -122,7 +122,7 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
 
-def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_try):
+def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_try, viz_kwargs={}):
     """
     # PREPROCESSING
     # 1. Split data into training, validation, and testing splits of 70%, 15%, 15%.
@@ -165,7 +165,7 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, L_max, num_bins)
     
     directory = parsing.save_clusters(k_labels, data, L_max, num_bins, entropy, method="kmeans-molecular-frame")
-    visualize_clusters(directory)
+    visualize_clusters(directory, **viz_kwargs)
 
 
 if __name__ == '__main__':
@@ -193,8 +193,9 @@ if __name__ == '__main__':
         cfg = yaml.load(stream, yaml.Loader)
 
     for key in cfg.keys():
-        cfg[key] = getattr(args, key) or cfg[key]
+        cfg[key] = getattr(args, key, None) or cfg[key]
     
+    print(type(cfg['viz_kwargs']))
     analyze(
         args.datafile,
         initial_clusters=cfg['clusters_init'],
@@ -204,5 +205,6 @@ if __name__ == '__main__':
         bins_to_try=np.arange(
             cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
         ),
-        max_L_to_try=cfg['L']
+        max_L_to_try=cfg['L'],
+        viz_kwargs=cfg['viz_kwargs']
     )

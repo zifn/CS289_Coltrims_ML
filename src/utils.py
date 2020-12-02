@@ -110,7 +110,7 @@ def generate_synthetic_data(k, num_particles, points_per_cluster):
     """
     Function to generate a random synthetic dataset for running the clustering
     and fitting algorithms. Takes the number of clusters, number of particles,
-    and the points per cluster, and returns a dataset with shape 
+    and the points per cluster, and returns a dataset with shape
     (k*points_per_cluster data points, 3*num_particles).
 
     Parameters

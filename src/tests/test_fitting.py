@@ -55,6 +55,8 @@ def test_fit_Y_lms_va_binning():
                     continue
                 for _ in range(L+1):
                     sample_B_lms.append(rng.normal())
+                for _ in range(-L, 0):
+                    sample_B_lms.append(rng.normal())
             sample_B_lms[0] = 3
             if not rand_dist:
                 sample_B_lms = len(sample_B_lms)*[0]
@@ -96,6 +98,8 @@ def test_validation_cross_entropy():
 
     for L in range(0, L_max + 1):
         for _ in range(L+1):
+            sample_B_lms.append(0)
+        for _ in range(-L, 0):
             sample_B_lms.append(0)
     sample_B_lms[0] = 1
     sample_B_lms = np.array(sample_B_lms)

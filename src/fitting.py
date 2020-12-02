@@ -92,6 +92,10 @@ def Y_lm_features(theta, phi, L_max, only_even_Ls=False):
             temp = np.real(sph_harm(M, L, theta, phi))
             Y_lm_feat.append(temp)
             lm_order.append((L, M))
+        for M in range(-L, 0):
+            temp = np.imag(sph_harm(abs(M), L, theta, phi))
+            Y_lm_feat.append(temp)
+            lm_order.append((L, M))
     Y_lm_feat = np.array(Y_lm_feat).T
     return Y_lm_feat, lm_order
 
@@ -196,7 +200,8 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
 
     unique_labels = np.unique(labels)
     assert  set(list(unique_labels)).issubset(set(range(len(model_params))))
-    assert unique_labels.shape[0] == len(model_params) or unique_labels.shape[0] == len(model_params) + 1
+    assert unique_labels.shape[0] == len(model_params) or unique_labels.shape[0] == len(model_params) + 1, \
+                f"unique_labels.shape = {unique_labels.shape} and len(model_params) = {len(model_params)}"
     unique_labels = list(range(len(model_params)))
 
     # make qs

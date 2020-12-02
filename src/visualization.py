@@ -1,8 +1,7 @@
-import numpy as np
-
-import matplotlib.pyplot as plt
-
 from itertools import product
+
+import numpy as np
+import matplotlib.pyplot as plt
 
 from .utils import (
     extract_data,

@@ -1,6 +1,9 @@
-import numpy as np
+from itertools import product, zip_longest
 
+import numpy as np
 import matplotlib.pyplot as plt
+
+from matplotlib.cm import get_cmap
 
 from .utils import (
     extract_data,
@@ -11,7 +14,7 @@ from .utils import (
     OXYGEN_MASS
 )
 
-def plot_data(x, y, clusters=None, colors=None, **kwargs):
+def plot_data(x, y, clusters=None, colors=None, figsize=(5,3), **kwargs):
     """
     Function to plot the COLTRIMS data. Takes two arrays of computed values and
     plots these along the x and y axes respectively. The function will color the
@@ -36,7 +39,7 @@ def plot_data(x, y, clusters=None, colors=None, **kwargs):
     tuple
         A tuple (fig, ax) containing the resulting matplotlib figure and axes.
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=figsize)
 
     if colors is None:
         colors = [f'C{i}' for i in range(10)]
@@ -57,7 +60,7 @@ def plot_data(x, y, clusters=None, colors=None, **kwargs):
 
     return fig, ax
 
-def plot_2d_histogram(x, y, bins, **kwargs):
+def plot_2d_histogram(x, y, clusters=None, bins=None, figsize=(5,3), **kwargs):
     """
     Function to plot a 2D histogram of the COLTRIMS data. Takes two arrays of
     computed values, bins them, and plots the 2D bins along the x and y axes as
@@ -82,10 +85,45 @@ def plot_2d_histogram(x, y, bins, **kwargs):
     tuple
         A tuple (fig, ax) containing the resulting matplotlib figure and axes.
     """
-    fig, ax = plt.subplots()
-    ax.hist2d(x, y, bins=bins, **kwargs)
+    if clusters is not None:
+        labels = np.unique(clusters)
+        n = np.ceil(np.sqrt(labels.shape[0])).astype(int)
 
-    return fig, ax
+        rows = n
+        cols = n if n*(n-1) < labels.shape[0] else n-1
+
+        fig, axes = plt.subplots(
+            rows,
+            cols,
+            figsize=(cols, rows)*np.array(figsize),
+            sharex=True,
+            sharey=True
+        )
+    else:
+        clusters = np.zeros(len(x))
+        labels = [0]
+
+        fig, ax = plt.subplots(figsize=figsize)
+        axes = np.array([ax])
+
+    idxs = product(*[range(m) for m in axes.shape])
+
+    for label, idx in zip_longest(labels, idxs):
+        if label is None:
+            axes[idx].axis('off')
+            axes[(idx[0] - 1, idx[1])].xaxis.set_tick_params(labelbottom=True)
+            continue
+
+        x_i = x[clusters == label]
+        y_i = y[clusters == label]
+
+        cmap = get_cmap(kwargs.get('cmap'))
+        axes[idx].set_facecolor(cmap(0))
+        axes[idx].hist2d(x_i, y_i, bins=bins, **kwargs)
+
+        axes[idx].set_title(f'Cluster {int(label)}', loc='left')
+
+    return fig, axes
 
 def format_plot(plot, xlabel='', ylabel='', title=''):
     """
@@ -108,11 +146,15 @@ def format_plot(plot, xlabel='', ylabel='', title=''):
     figure
         A matplotlib figure containing the resulting plot.
     """
-    fig, ax = plot
+    fig, axes = plot
 
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    if not isinstance(axes, np.ndarray):
+        axes = np.array([axes])
+
+    for ax in axes.flatten():
+        ax.set_xlabel(xlabel, fontsize=14)
+        ax.set_ylabel(ylabel, fontsize=14)
+        ax.set_title(title)
 
     return fig
 
@@ -148,11 +190,11 @@ def plot_electron_energy_vs_KER(dataset, clusters=None, bins=None, **kwargs):
     KER = sum(energies)
 
     if bins:
-        plot = plot_2d_histogram(electron_sum, KER, bins, **kwargs)
+        plot = plot_2d_histogram(electron_sum, KER, clusters, bins, **kwargs)
     else:
         plot = plot_data(electron_sum, KER, clusters, **kwargs)
 
-    return format_plot(plot, 'Electron Sum Energy', 'KER')
+    return format_plot(plot, 'Electron Sum Energy (a.u.)', 'KER (a.u.)')
 
 def plot_electron_energies(dataset, clusters=None, bins=None, **kwargs):
     """
@@ -183,7 +225,7 @@ def plot_electron_energies(dataset, clusters=None, bins=None, **kwargs):
     energy2 = kinetic_energy(*e2.T, ELECTRON_MASS)
 
     if bins:
-        plot = plot_2d_histogram(energy1, energy2, bins, **kwargs)
+        plot = plot_2d_histogram(energy1, energy2, clusters, bins, **kwargs)
     else:
         plot = plot_data(energy1, energy2, clusters, **kwargs)
 
@@ -218,11 +260,11 @@ def plot_ion_energies(dataset, clusters=None, bins=None, **kwargs):
     energy2 = kinetic_energy(*ion2.T, DEUTERON_MASS)
 
     if bins:
-        plot = plot_2d_histogram(energy1, energy2, bins, **kwargs)
+        plot = plot_2d_histogram(energy1, energy2, clusters, bins, **kwargs)
     else:
         plot = plot_data(energy1, energy2, clusters, **kwargs)
 
-    return format_plot(plot, 'Ion 1 Energy', 'Ion 2 Energy')
+    return format_plot(plot, 'Ion 1 Energy (a.u.)', 'Ion 2 Energy (a.u.)')
 
 def plot_KER_vs_angle(dataset, clusters=None, bins=None, cos=False, **kwargs):
     """
@@ -262,11 +304,11 @@ def plot_KER_vs_angle(dataset, clusters=None, bins=None, cos=False, **kwargs):
     angles = ejection_angle(*ion1.T, *ion2.T, cos=cos)
 
     if bins:
-        plot = plot_2d_histogram(KER, angles, bins, **kwargs)
+        plot = plot_2d_histogram(KER, angles, clusters, bins, **kwargs)
     else:
         plot = plot_data(KER, angles, clusters, **kwargs)
 
-    return format_plot(plot, 'KER', r'$\theta$')
+    return format_plot(plot, 'KER (a.u.)', r'$\theta$ (rad)')
 
 def plot_electron_energy_vs_ion_energy_difference(
     dataset,
@@ -305,8 +347,8 @@ def plot_electron_energy_vs_ion_energy_difference(
     ion_difference = np.abs(energies[3] - energies[4])
 
     if bins:
-        plot = plot_2d_histogram(electron_sum, ion_difference, bins, **kwargs)
+        plot = plot_2d_histogram(electron_sum, ion_difference, clusters, bins, **kwargs)
     else:
         plot = plot_data(electron_sum, ion_difference, clusters, **kwargs)
 
-    return format_plot(plot, 'Electron Sum Energy', 'Ion Energy Difference')
+    return format_plot(plot, 'Electron Sum Energy (a.u.)', 'Ion Energy Difference (a.u.)')

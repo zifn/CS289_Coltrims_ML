@@ -1,11 +1,15 @@
+from itertools import product
+
 import numpy as np
 import pandas as pd
 
 ELECTRON_MASS = 510.99895000e3 # eV
 ATOMIC_MASS = 931.49410242e6 # eV
 
-DEUTERON_MASS = 2.01410177811 * ATOMIC_MASS
-OXYGEN_MASS = 15.999 * ATOMIC_MASS
+ELECTRON_MASS /= ATOMIC_MASS # Use atomic mass as units.
+
+DEUTERON_MASS = 2.01410177811 # a.u.
+OXYGEN_MASS = 15.999 # a.u.
 
 def kinetic_energy(px, py, pz, mass):
     """
@@ -101,3 +105,57 @@ def extract_data(dataset):
     e2 = dataset[:, 12:]
 
     return ion1, ion2, neutral, e1, e2
+
+def generate_synthetic_data(k, num_particles, points_per_cluster):
+    """
+    Function to generate a random synthetic dataset for running the clustering
+    and fitting algorithms. Takes the number of clusters, number of particles,
+    and the points per cluster, and returns a dataset with shape
+    (k*points_per_cluster data points, 3*num_particles).
+
+    Parameters
+    ------------
+    k : int
+        The number of clusters to generate.
+    num_particles: int
+        The number of particles to include in the data. 3*num_particles values
+        will be generated for each entry of the dataset, corresponding to the
+        x, y, z momentums of the particles.
+    points_per_cluster: int
+        The number of points to add to each cluster.
+
+    Returns
+    --------
+    array-like
+        Returns a dataset with k*points_per_cluster entries.
+    """
+    means = np.array([((phi + 0.5)*np.pi/2, (theta + 0.5)*np.pi/2)
+                                 for phi, theta in product(list(range(4)), list(range(2)))])
+
+    cluster_angles = means[np.random.randint(0, 8, size=(k, num_particles))]
+    cluster_radii = np.random.uniform(-10, 10, size=(k, num_particles))
+
+    dataset = []
+
+    for i in range(k):
+        phis = np.random.normal(cluster_angles[i, :, 0],
+                                              scale=np.pi/16,
+                                              size=(points_per_cluster, num_particles))
+        thetas = np.random.normal(cluster_angles[i, :, 1],
+                                                 scale=np.pi/16,
+                                                 size=(points_per_cluster, num_particles))
+        r = np.random.normal(cluster_radii[i],
+                                         scale=0.3,
+                                         size=(points_per_cluster, num_particles))
+
+        x = r*np.cos(phis)*np.sin(thetas)
+        y = r*np.sin(phis)*np.sin(thetas)
+        z = r*np.cos(thetas)
+
+        ps = np.hstack([x, y, z])
+        ps = ps[:, np.array([(i, num_particles + i, 2*num_particles + i) for i in range(num_particles)]).flatten()]
+
+        dataset.append(ps)
+
+    dataset = np.vstack(dataset)
+    return dataset

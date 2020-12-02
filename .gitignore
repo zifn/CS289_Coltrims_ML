@@ -1,6 +1,9 @@
 # Data Files
 *.dat
 
+# VSCode Files
+.vscode/*
+
 # OS X
 .DS_Store
 
@@ -11,6 +14,7 @@ __pycache__/
 
 # Folders Containing Privileged Information
 privileged/
+results/
 
 # C extensions
 *.so

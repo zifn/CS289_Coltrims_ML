@@ -1,3 +1,4 @@
+
 # CS289A - COLTRIMS ML
 
 ## RIMS - Group
@@ -7,7 +8,7 @@ Assignment: Project Family F, CS289A, UC Berkeley Fall 2020
 
 ## Summary
 
-This codebase implements an analysis of COLd Target Recoil Ion Momentum Spectroscopy (COLTRIMS) scattering data by clustering measurments into potential molecular states. We determine the fitness of the clustering by fitting each cluster to an angular distribution and calculating the cross entry between clustering label and predicted fitting label. The data analyzed in the final report was graciously provided by the [Atomic, Molecular, and Optical Sciences group](http://amo-csd.lbl.gov/home.php) at LBNL and has not yet been published. Thus it cannot be shared.
+This codebase implements an analysis of COLd Target Recoil Ion Momentum Spectroscopy (COLTRIMS) scattering data by clustering measurements into potential molecular states. We use the cross-entropy loss function as a measure of the quality of the clustering. This is computed by using the clustering label generated from the clustering algorithm, and the probabilities generated after fitting each cluster to an angular probability distribution to compute the cross-entropy of the clustered results. The data analyzed in the final report was graciously provided by the [Atomic, Molecular, and Optical Sciences group](http://amo-csd.lbl.gov/home.php) at LBNL and has not yet been published. Thus it cannot be shared.
 Instead we provide a randomly generated dataset 'synthetic.dat' so that our code can be tested.
 
 Analysis file is 'analysis.py' with source files found in 'src/' and testing files found in 'src/tests/'.
@@ -61,7 +62,7 @@ optional arguments:
                         Directory to save results to.
 ```
 
-To analysis the random data set with default settings:
+To analyze the generated data set with default settings:
 ```
 user@machine:~/project_repo$ python analysis.py synthetic.dat
 ```
@@ -73,4 +74,9 @@ Tests of the source functions can be run from the root project directory by:
 user@machine:~/project_repo$ pytest
 ```
 
-We conform to Pylint specifications for the source and testing files.
+Linter results using the included linter configuration file can be run from the root project directory by: 
+
+```
+user@machine:~/project_repo$ pylint --rcfile=.pylintrc src
+```
+

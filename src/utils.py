@@ -1,3 +1,5 @@
+from itertools import product
+
 import numpy as np
 import pandas as pd
 
@@ -105,17 +107,24 @@ def extract_data(dataset):
     return ion1, ion2, neutral, e1, e2
 
 def generate_synthetic_data(k, num_particles, points_per_cluster):
-    means = np.array([((phi + 0.5)*np.pi/2, (theta + 0.5)*np.pi/2) for phi, theta in product(list(range(4)), list(range(2)))])
-    
+    means = np.array([((phi + 0.5)*np.pi/2, (theta + 0.5)*np.pi/2)
+                                 for phi, theta in product(list(range(4)), list(range(2)))])
+
     cluster_angles = means[np.random.randint(0, 8, size=(k, num_particles))]
     cluster_radii = np.random.uniform(-10, 10, size=(k, num_particles))
-    
+
     dataset = []
-    
+
     for i in range(k):
-        phis = np.random.normal(cluster_angles[i, :, 0], scale=np.pi/16, size=(points_per_cluster, num_particles))
-        thetas = np.random.normal(cluster_angles[i, :, 1], scale=np.pi/16, size=(points_per_cluster, num_particles))
-        r = np.random.normal(cluster_radii[i], scale=0.3, size=(points_per_cluster, num_particles))
+        phis = np.random.normal(cluster_angles[i, :, 0],
+                                              scale=np.pi/16,
+                                              size=(points_per_cluster, num_particles))
+        thetas = np.random.normal(cluster_angles[i, :, 1],
+                                                 scale=np.pi/16,
+                                                 size=(points_per_cluster, num_particles))
+        r = np.random.normal(cluster_radii[i],
+                                         scale=0.3,
+                                         size=(points_per_cluster, num_particles))
 
         x = r*np.cos(phis)*np.sin(thetas)
         y = r*np.sin(phis)*np.sin(thetas)
@@ -127,5 +136,4 @@ def generate_synthetic_data(k, num_particles, points_per_cluster):
         dataset.append(ps)
 
     dataset = np.vstack(dataset)
-    
     return dataset

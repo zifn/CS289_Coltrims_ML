@@ -1,9 +1,9 @@
+from itertools import product, zip_longest
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-from itertools import product, zip_longest
 from matplotlib.cm import get_cmap
-from copy import deepcopy
 
 from .utils import (
     extract_data,

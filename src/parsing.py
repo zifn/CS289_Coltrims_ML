@@ -84,7 +84,7 @@ def write_momentum(output_file_path, momentum, write_headers=False,
         else:
             momentum.to_csv(output_file_path, sep=" ", header=False, index=False)
 
-def save_clusters(labels, data, L_max, bins, entropy, method="kmeans-molecular-frame"):
+def save_clusters(labels, data, L_max, bins, entropy, root_dir, method="kmeans-molecular-frame"):
     """
     Saves clusters with unique labels in a newly created folder using metadata
     to name the folder in separate files.
@@ -117,7 +117,7 @@ def save_clusters(labels, data, L_max, bins, entropy, method="kmeans-molecular-f
         used in conjuction with the visualization module to plot clustered data.
     """
     k = len(np.unique(labels))
-    root_dir = "privileged"
+
     if not os.path.isdir(root_dir):
         os.mkdir(root_dir)
 

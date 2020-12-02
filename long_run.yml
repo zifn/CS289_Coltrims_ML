@@ -6,5 +6,6 @@ bins_min: 50
 bins_max: 160
 bins_step: 10
 L: 6
+save_dir: results
 viz_kwargs:
   bins: 100

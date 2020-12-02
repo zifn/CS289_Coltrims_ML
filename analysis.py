@@ -77,7 +77,7 @@ def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, t
     np.savetxt(file_path, np.array(parameters), header="L, num_bins, cross_entropy")
     return optimal_parameters
 
-def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, cluster_range, L_max, num_bins, save=True):
+def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, cluster_range, L_max, num_bins, save_dir='.'):
     print('Range of clusters to consider: ', cluster_range)
     
     parameters = []
@@ -107,8 +107,9 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
             Bs.append(B_lms)
         entropy = fitting.validation_cross_entropy(val_ion_data, val_ion_labels, Bs, L_max, only_even_Ls=False)
         parameters.append((N, entropy))
-        directory = parsing.save_clusters(labels, data, L_max, num_bins, entropy, method="kmeans-molecular-frame")
-        print(directory)
+
+        directory = parsing.save_clusters(labels, data, L_max, num_bins, entropy, root_dir=save_dir, method="kmeans-molecular-frame")
+
         visualize_clusters(directory)
         print(parameters[-1])
 
@@ -122,7 +123,7 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
 
-def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_try, viz_kwargs={}):
+def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_try, save_dir='.', viz_kwargs={}):
     """
     # PREPROCESSING
     # 1. Split data into training, validation, and testing splits of 70%, 15%, 15%.
@@ -140,6 +141,7 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     #    features to be physically relavent as these are used to calculate energies
     #    of the involved scattering constituents.
     """
+
     data = parsing.read_momentum(filename)
     data = preprocess.molecular_frame(data[:10000, :])
     print(f"Data read from file {filename} has shape {str(data.shape)}.")
@@ -162,9 +164,9 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
 
     L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bins_to_try)
 
-    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, L_max, num_bins)
-    
-    directory = parsing.save_clusters(k_labels, data, L_max, num_bins, entropy, method="kmeans-molecular-frame")
+    num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, L_max, num_bins, save_dir)
+
+    directory = parsing.save_clusters(k_labels, data, L_max, num_bins, entropy, root_dir=save_dir, method="kmeans-molecular-frame")
     visualize_clusters(directory, **viz_kwargs)
 
 
@@ -187,6 +189,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-L', dest='L', help='The largest Lmax to try.')
 
+    parser.add_argument('-s', '--save', dest='save_dir', help='Directory to save results to.')
+
     args = parser.parse_args()
 
     with open(args.config, 'r') as stream:
@@ -194,8 +198,7 @@ if __name__ == '__main__':
 
     for key in cfg.keys():
         cfg[key] = getattr(args, key, None) or cfg[key]
-    
-    print(type(cfg['viz_kwargs']))
+
     analyze(
         args.datafile,
         initial_clusters=cfg['clusters_init'],
@@ -206,5 +209,6 @@ if __name__ == '__main__':
             cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
         ),
         max_L_to_try=cfg['L'],
+        save_dir=cfg['save_dir'],
         viz_kwargs=cfg['viz_kwargs']
     )

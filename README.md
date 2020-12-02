@@ -8,7 +8,7 @@ Assignment: Project Family F, CS289A, UC Berkeley Fall 2020
 
 ## Summary
 
-This codebase implements an analysis of COLd Target Recoil Ion Momentum Spectroscopy (COLTRIMS) scattering data by clustering measurements into potential molecular states. We use the cross-entropy loss function to as a measure of the goodness of fit. This is computed by using the clustering label generated from the clustering algorithm, and the probabilities generated after fitting each cluster to an angular probability distribution to compute the cross-entropy of the clustered results. The data analyzed in the final report was graciously provided by the [Atomic, Molecular, and Optical Sciences group](http://amo-csd.lbl.gov/home.php) at LBNL and has not yet been published. Thus it cannot be shared.
+This codebase implements an analysis of COLd Target Recoil Ion Momentum Spectroscopy (COLTRIMS) scattering data by clustering measurements into potential molecular states. We use the cross-entropy loss function as a measure of the quality of the clustering. This is computed by using the clustering label generated from the clustering algorithm, and the probabilities generated after fitting each cluster to an angular probability distribution to compute the cross-entropy of the clustered results. The data analyzed in the final report was graciously provided by the [Atomic, Molecular, and Optical Sciences group](http://amo-csd.lbl.gov/home.php) at LBNL and has not yet been published. Thus it cannot be shared.
 Instead we provide a randomly generated dataset 'synthetic.dat' so that our code can be tested.
 
 Analysis file is 'analysis.py' with source files found in 'src/' and testing files found in 'src/tests/'.

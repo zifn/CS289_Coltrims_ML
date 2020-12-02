@@ -99,6 +99,8 @@ def test_validation_cross_entropy():
     for L in range(0, L_max + 1):
         for _ in range(L+1):
             sample_B_lms.append(0)
+        for _ in range(-L, 0):
+            sample_B_lms.append(0)
     sample_B_lms[0] = 1
     sample_B_lms = np.array(sample_B_lms)
 

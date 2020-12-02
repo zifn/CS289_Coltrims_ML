@@ -7,8 +7,8 @@ Assignment: Project Family F, CS289A, UC Berkeley Fall 2020
 
 ## Summary
 
-This code base implements an analysis of COLd Target Recoil Ion Momentum Spectroscopy (COLTRIMS) scattering data by clustering measurments into potential molecular states. We determine the fitness of the clustering by fitting each cluster to an angular distribution and calculating the cross entry between clustering label and predicted fitting label. The data analyzed in the final report was graciously provided by the [Atomic, Molecular, and Optical Sciences group](http://amo-csd.lbl.gov/home.php) at LBNL and has not yet been published. Thus it cannot be shared.
-Instead we provide a randomly generated dataset 'RANDOM_DATASET.dat' so that our code can be tested.
+This codebase implements an analysis of COLd Target Recoil Ion Momentum Spectroscopy (COLTRIMS) scattering data by clustering measurments into potential molecular states. We determine the fitness of the clustering by fitting each cluster to an angular distribution and calculating the cross entry between clustering label and predicted fitting label. The data analyzed in the final report was graciously provided by the [Atomic, Molecular, and Optical Sciences group](http://amo-csd.lbl.gov/home.php) at LBNL and has not yet been published. Thus it cannot be shared.
+Instead we provide a randomly generated dataset 'synthetic.dat' so that our code can be tested.
 
 Analysis file is 'analysis.py' with source files found in 'src/' and testing files found in 'src/tests/'.
 
@@ -25,6 +25,7 @@ user@machine:~/project_repo$ python -m pip install -r requirements.txt
 - scipy>=1.3.1
 - pandas>=0.25.1
 - scikit-learn>=0.23.2
+- pyyaml>=5.3.0
 
 ## Quick Start
 
@@ -33,10 +34,8 @@ To run the analysis code:
 ```
 user@machine:~/project_repo$ python analysis.py
 
-usage: analysis.py [-h] [-c CONFIG] [--cinit CLUSTERS_INIT]
-                   [--cmin CLUSTERS_MIN] [--cmax CLUSTERS_MAX]
-                   [--cstep CLUSTERS_STEP] [--bmin BINS_MIN] [--bmax BINS_MAX]
-                   [--bstep BINS_STEP] [-L L]
+usage: analysis.py [-h] [-c CONFIG] [--cinit CLUSTERS_INIT] [--cmin CLUSTERS_MIN] [--cmax CLUSTERS_MAX] [--cstep CLUSTERS_STEP] [--bmin BINS_MIN] [--bmax BINS_MAX] [--bstep BINS_STEP] [-L L]
+                   [-s SAVE_DIR]
                    datafile
 
 Analyze a COLTRIMS dataset.
@@ -58,11 +57,13 @@ optional arguments:
   --bmax BINS_MAX       The maximum bin size.
   --bstep BINS_STEP     The step size for the bin size grid search
   -L L                  The largest Lmax to try.
+  -s SAVE_DIR, --save SAVE_DIR
+                        Directory to save results to.
 ```
 
 To analysis the random data set with default settings:
 ```
-user@machine:~/project_repo$ python analysis.py RANDOM_DATASET.dat
+user@machine:~/project_repo$ python analysis.py synthetic.dat
 ```
 
 ## Pylint and Pytest

@@ -107,6 +107,28 @@ def extract_data(dataset):
     return ion1, ion2, neutral, e1, e2
 
 def generate_synthetic_data(k, num_particles, points_per_cluster):
+    """
+    Function to generate a random synthetic dataset for running the clustering
+    and fitting algorithms. Takes the number of clusters, number of particles,
+    and the points per cluster, and returns a dataset with shape 
+    (k*points_per_cluster data points, 3*num_particles).
+
+    Parameters
+    ------------
+    k : int
+        The number of clusters to generate.
+    num_particles: int
+        The number of particles to include in the data. 3*num_particles values
+        will be generated for each entry of the dataset, corresponding to the
+        x, y, z momentums of the particles.
+    points_per_cluster: int
+        The number of points to add to each cluster.
+
+    Returns
+    --------
+    array-like
+        Returns a dataset with k*points_per_cluster entries.
+    """
     means = np.array([((phi + 0.5)*np.pi/2, (theta + 0.5)*np.pi/2)
                                  for phi, theta in product(list(range(4)), list(range(2)))])
 

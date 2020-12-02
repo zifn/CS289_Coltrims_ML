@@ -36,7 +36,7 @@ def visualize_clusters(directory, bins=None, plot_kwargs={}, save_kwargs={'dpi':
     fig.savefig(os.path.join(directory, 'electron-energy-vs-ion_energy-difference.png'), **save_kwargs)
     plt.close(fig)
 
-def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, L_max, bin_range):
+def optimal_angular_distribution_hyperparameters(train_data, save_dir, val_data, labels, train_indices, val_indices, L_max, bin_range):
     print('L_max: ', L_max)
     print('Range of bin values to consider: ', bin_range)
 
@@ -73,8 +73,8 @@ def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, t
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
     
-    file_path = os.path.join("privileged", "kmeans-molecular-frame_optimal_parameters.csv")
-    np.savetxt(file_path, np.array(parameters), header="L, num_bins, cross_entropy")
+    file_path = os.path.join(save_dir, "kmeans-molecular-frame_optimal_parameters.csv")
+    np.savetxt(file_path, np.array(parameters), delimiter=',', header="L,num_bins,cross_entropy", comments='')
     return optimal_parameters
 
 def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, cluster_range, L_max, num_bins, save_dir='.'):
@@ -118,8 +118,8 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
     optimal_parameters = parameters[optimal_index]
     print("optimal_parameters = ", optimal_parameters)
     
-    file_path = os.path.join("privileged", "kmeans-molecular-frame_k_vs_cross_entropy.csv")
-    np.savetxt(file_path, np.array(parameters), header="k, cross_entropy")
+    file_path = os.path.join(save_dir, "kmeans-molecular-frame_k_vs_cross_entropy.csv")
+    np.savetxt(file_path, np.array(parameters), delimiter=',', header="k,cross_entropy", comments='')
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
 
@@ -141,6 +141,8 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     #    features to be physically relavent as these are used to calculate energies
     #    of the involved scattering constituents.
     """
+    if not os.path.isdir(save_dir):
+        os.mkdir(save_dir)
 
     data = parsing.read_momentum(filename)
     data = preprocess.molecular_frame(data[:10000, :])
@@ -162,7 +164,7 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
 
     k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=initial_clusters)
 
-    L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bins_to_try)
+    L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, save_dir, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bins_to_try)
 
     num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, L_max, num_bins, save_dir)
 

@@ -13,26 +13,26 @@ import matplotlib.pyplot as plt
 
 from argparse import ArgumentParser
 
-def visualize_clusters(directory, save_kwargs={'dpi': 250}):
+def visualize_clusters(directory, bins=100, plot_kwargs={}, save_kwargs={'dpi': 250, 'bbox_inches': 'tight'}):
     data, labels = parsing.read_clusters(directory, has_headers=True)
 
-    fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels, bins=50)
+    fig = visualization.plot_electron_energy_vs_KER(data, clusters=labels, bins=bins, **plot_kwargs)
     fig.savefig(os.path.join(directory, 'electron-energy-vs-KER.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_electron_energies(data, clusters=labels, bins=50)
+    fig = visualization.plot_electron_energies(data, clusters=labels, bins=bins, **plot_kwargs)
     fig.savefig(os.path.join(directory, 'electron-energies.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_ion_energies(data, clusters=labels, bins=50)
+    fig = visualization.plot_ion_energies(data, clusters=labels, bins=bins, **plot_kwargs)
     fig.savefig(os.path.join(directory, 'ion-energies.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_KER_vs_angle(data, clusters=labels, bins=50)
+    fig = visualization.plot_KER_vs_angle(data, clusters=labels, bins=bins, **plot_kwargs)
     fig.savefig(os.path.join(directory, 'KER-vs-angle.png'), **save_kwargs)
     plt.close(fig)
 
-    fig = visualization.plot_electron_energy_vs_ion_energy_difference(data, clusters=labels, bins=50)
+    fig = visualization.plot_electron_energy_vs_ion_energy_difference(data, clusters=labels, bins=bins, **plot_kwargs)
     fig.savefig(os.path.join(directory, 'electron-energy-vs-ion_energy-difference.png'), **save_kwargs)
     plt.close(fig)
 

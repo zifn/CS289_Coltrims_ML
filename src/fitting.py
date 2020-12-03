@@ -212,13 +212,15 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
 
     #compute cross-entropy
+    flag = True
     cross_entropy = 0
     for label in unique_labels:
         if label == -1:
             pass
+        flag = False
         class_qs = qs[labels == label]
         cross_entropy += -sum(np.log(class_qs[:, label]))*class_qs.shape[0]
     
-    if cross_entropy == 0:
+    if flag: # No entropies were computed
             return np.inf
     return cross_entropy

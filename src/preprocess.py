@@ -139,7 +139,8 @@ def perform_PCA(data, components=2):
     np.array (pandas dataframe not currently supported)
         Returns the rotated data matrix with two columns for use in visualization.
     """
-    assert data.shape[1] >= components, 'Not enough columns in data to reduce via PCA.'
+    if components != None:
+        assert data.shape[1] >= components, 'Not enough columns in data to reduce via PCA.'
     reducer = sklearn.decomposition.PCA(n_components=components, whiten=False)
     # n_components - how many dimensions of data to keep; None keeps all.
     # whiten - perform whitening on data

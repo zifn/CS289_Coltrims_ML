@@ -262,8 +262,8 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     print(f"Data read from file {filename} has shape {str(data.shape)}.")
     phi = preprocess.generate_feature_matrix(data)
     print("Generated Features")
-    phi = preprocess.whiten_data(phi)
-    print("whiten features")
+    phi = preprocess.perform_PCA(phi, components=30)
+    print("PCA-ed features")
     
     indices = np.arange(data.shape[0])
     train_indices, test_val_indices = preprocess.data_split(indices, .70, 23)

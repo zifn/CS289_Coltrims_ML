@@ -143,6 +143,9 @@ def optimal_optics_hyperparameters(phi, data, train_data, val_data, train_indice
     parameters = []
     k_labels = []
     param_names = ("index", "num_clusters", "cross-entropy", "L_max", "num_bins", "min_samp", "max_eps")
+    summary_file_path = os.path.join(save_dir, "optics-molecular-frame_results_summary.csv")
+    with open(summary_file_path, "w") as f:
+        f.write("index,num_clusters,cross-entropy,L_max,num_bins,min_samp,max_eps\n")
     
     i = 0
     for min_samp, max_eps in product(min_samp_list, max_eps_array):
@@ -165,21 +168,14 @@ def optimal_optics_hyperparameters(phi, data, train_data, val_data, train_indice
 
         visualize_clusters(directory, 100)
         print(sum([f" {w} = {n}" for w, n in zip(param_names, param_names[-1])]))
+        with open(summary_file_path, "w") as f:
+            f.write(f"{i},{num_clusters},{entropy},{L_max},{num_bins},{min_samp},{max_eps}\n")
 
     entropies = np.array(parameters)[:,1]
     optimal_index = np.argmin(entropies)
     optimal_parameters = parameters[optimal_index]
     print("optimal: " + sum([f" {w} = {n}" for w, n in zip(param_names, optimal_parameters)]))
-    
-    
-    parameters = np.array(parameters)
-    file_path = os.path.join(save_dir, "optics-molecular-frame_k_vs_cross_entropy.csv")
-    np.savetxt(file_path,
-                    parameters,
-                    delimiter=',',
-                    header="index,num_clusters,cross-entropy,L_max,num_bins,min_samp,max_eps",
-                    comments='')
-    
+
     file_path = os.path.join(save_dir, "optics_k_vs_cross-entropy.png")
     plt.plot(parameters[1], parameters[2], "x")
     plt.xlabel("Number of Clusters", size=18)
@@ -195,7 +191,10 @@ def long_optimal_kmeans_hyperparameters(phi, data, train_data, val_data, train_i
     max_eps_array = 10.0**np.arange(5, 100, 10)
     parameters = []
     k_labels = []
-    
+    summary_file_path = os.path.join(save_dir, "kmeans-molecular-frame_results_summary.csv")
+    with open(summary_file_path, "w") as f:
+        f.write("index,num_clusters,cross-entropy,L_max,num_bins,N\n")
+
     i = 0
     for N in cluster_range:
         i += 1
@@ -218,6 +217,8 @@ def long_optimal_kmeans_hyperparameters(phi, data, train_data, val_data, train_i
         visualize_clusters(directory, 100)
         param_names = ("index", "num_clusters", "cross-entropy", "L_max", "num_bins", 'N')
         print("optimal iteration: ", [f" {w} = {n}" for w, n in zip(param_names, parameters[-1])])
+        with open(summary_file_path, "w") as f:
+            f.write(f"{i},{num_clusters},{entropy},{L_max},{num_bins},{N}\n")
 
     entropies = np.array(parameters)[:,1]
     optimal_index = np.argmin(entropies)
@@ -225,12 +226,6 @@ def long_optimal_kmeans_hyperparameters(phi, data, train_data, val_data, train_i
     print("optimal: ", [f" {w} = {n}" for w, n in zip(param_names, optimal_parameters)])
 
     parameters = np.array(parameters)
-    file_path = os.path.join(save_dir, "kmeans-molecular-frame_k_vs_cross_entropy.csv")
-    np.savetxt(file_path,
-                    parameters,
-                    delimiter=',',
-                    header="index,num_clusters,cross-entropy,L_max,num_bins,N",
-                    comments='')
     
     file_path = os.path.join(save_dir, "kmeans_k_vs_cross-entropy.png")
     plt.plot(parameters[1], parameters[2], "x")
@@ -263,7 +258,7 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
         os.mkdir(save_dir)
 
     data = parsing.read_momentum(filename)
-    data = preprocess.molecular_frame(data[:10000, :])
+    data = preprocess.molecular_frame(data[:, :])
     print(f"Data read from file {filename} has shape {str(data.shape)}.")
     phi = preprocess.generate_feature_matrix(data)
     print("Generated Features")

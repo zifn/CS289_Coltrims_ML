@@ -121,7 +121,10 @@ def save_clusters(labels, data, L_max, bins, entropy, root_dir, method="kmeans-m
     if not os.path.isdir(root_dir):
         os.mkdir(root_dir)
 
-    dir_name = f"{method}_with_{k}_clusters_{L_max}_{bins}_{int(entropy)}"
+    if type(entropy) == float and abs(entropy) != np.inf:
+        entropy= int(entropy)
+
+    dir_name = f"{method}_with_{k}_clusters_{L_max}_{bins}_{entropy}"
     dir_name = os.path.join(root_dir, dir_name)
 
     while os.path.isdir(dir_name):

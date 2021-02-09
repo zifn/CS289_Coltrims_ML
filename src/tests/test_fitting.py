@@ -121,5 +121,5 @@ def test_validation_cross_entropy():
     assert np.isclose(entropy, 0)
 
     #check no labels edge case
-    entropy = fitting.validation_cross_entropy(samples, [], model_params, L_max, only_even_Ls=False)
-    assert np.isclose(entropy, np.inf), f"expected {np.inf} but recievied {entropy}"
+    entropy2 = fitting.validation_cross_entropy(samples, [], model_params, L_max, only_even_Ls=False)
+    assert np.isclose(entropy2, np.inf), f"expected {np.inf} but recievied {entropy2}"

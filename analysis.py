@@ -256,7 +256,8 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     """
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
-
+    
+    #read and preprocess data
     data = parsing.read_momentum(filename)
     data = preprocess.molecular_frame(data[:, :])
     print(f"Data read from file {filename} has shape {str(data.shape)}.")
@@ -265,6 +266,7 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     phi = preprocess.perform_PCA(phi, components=30)
     print("PCA-ed features")
     
+    #split data
     indices = np.arange(data.shape[0])
     train_indices, test_val_indices = preprocess.data_split(indices, .70, 23)
     val_indices, test_indices = preprocess.data_split(test_val_indices, .50, 46)
@@ -272,13 +274,14 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
     train_data = data[train_indices, :]
     val_data = data[val_indices, :]
     test_data = data[test_indices, :]
-
+    
+    #check for simple errors
     assert train_data.shape[1] == val_data.shape[1] == test_data.shape[1] == data.shape[1], \
         "Number of columns is consistent between data splits."
     assert train_data.shape[0] + val_data.shape[0] + test_data.shape[0] == data.shape[0], \
         "Number of data points is consistent between data splits."
 
-    if False:
+    if False: #fast optimal k_means_clustering
         k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=initial_clusters)
 
         L_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, max_L_to_try, bins_to_try, save_dir)
@@ -287,9 +290,9 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, max_L_to_t
 
         directory = parsing.save_clusters(k_labels, data, L_max, num_bins, entropy, root_dir=save_dir, method="kmeans-molecular-frame")
         visualize_clusters(directory, **viz_kwargs)
-    elif False:
+    elif False: #optics clustering
          num, entropy, k_labels = optimal_optics_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, max_L_to_try, bins_to_try, save_dir)
-    elif True:
+    elif True: #long optimal k_means_clustering
          num, entropy, k_labels = long_optimal_kmeans_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, max_L_to_try, bins_to_try, clusters_to_try, save_dir)
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import numpy as np
 
 from .. import parsing
 
-def test_read_write():
+def test_read_write_momentum():
     temp_path = "temp.dat"
     rng = np.random.default_rng()
     values = rng.integers(0, 200, [200, 15])

@@ -91,7 +91,7 @@ def test_validation_cross_entropy():
     """
     simple test of cross entropy function
     """
-    # make uniform B_lms
+    # make uniform B_lms for sphere
     sample_B_lms = []
     N_valid = 100
     L_max = 3
@@ -104,7 +104,7 @@ def test_validation_cross_entropy():
     sample_B_lms[0] = 1
     sample_B_lms = np.array(sample_B_lms)
 
-    # sample points
+    # sample points around sphere
     rng = np.random.default_rng()
     theta = np.linspace(0, 2*np.pi, 2001)
     phi = np.linspace(0, np.pi, 2001)
@@ -116,5 +116,10 @@ def test_validation_cross_entropy():
     labels = np.zeros(N_valid)
     model_params = [sample_B_lms]
 
+    #fit
     entropy = fitting.validation_cross_entropy(samples, labels, model_params, L_max, only_even_Ls=False)
     assert np.isclose(entropy, 0)
+
+    #check no labels edge case
+    entropy = fitting.validation_cross_entropy(samples, [], model_params, L_max, only_even_Ls=False)
+    assert np.isclose(entropy, np.inf)

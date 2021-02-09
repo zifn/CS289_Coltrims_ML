@@ -127,8 +127,11 @@ def save_clusters(labels, data, L_max, bins, entropy, root_dir, method="kmeans-m
     dir_name = f"{method}_with_{k}_clusters_{L_max}_{bins}_{entropy}"
     dir_name = os.path.join(root_dir, dir_name)
 
-    while os.path.isdir(dir_name):
-        dir_name += "_"
+    index = 0
+    if os.path.isdir(dir_name):
+        while os.path.isdir(dir_name + f"_{index}"):
+            index += 1
+        dir_name += f"_{index}"
     os.mkdir(dir_name)
 
     for label in np.unique(labels):

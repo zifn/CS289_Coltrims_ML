@@ -220,7 +220,7 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
         flag = False
         class_qs = qs[labels == label]
         cross_entropy += -sum(np.log(class_qs[:, label]))*class_qs.shape[0]
-    
+
     if flag: # No entropies were computed
-            return np.inf
+        return np.inf
     return cross_entropy

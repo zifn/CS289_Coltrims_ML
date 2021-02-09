@@ -47,10 +47,10 @@ def test_read_write_clusters():
     data1, labels1 = parsing.read_clusters(dir_1)
     data2, labels2 = parsing.read_clusters(dir_2)
 
-    assert np.array_equal(data, data1)
     assert np.array_equal(data1, data2)
-    assert np.array_equal(labels, labels1)
     assert np.array_equal(labels1, labels2)
+    assert np.array_equal(labels, labels1)
+    assert np.array_equal(data, data1)
 
     #clean up
     shutil.rmtree(dir_root)

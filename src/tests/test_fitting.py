@@ -2,6 +2,7 @@ from itertools import product
 
 import numpy as np
 
+
 from .. import fitting
 
 def test_cart_spherical_conversions():
@@ -10,6 +11,7 @@ def test_cart_spherical_conversions():
     cardinal directions and if cart_to_spherical() and spherical_to_cart() are inverses
     if each other
     """
+    print(np.__version__)
     rng = np.random.default_rng()
 
     M_xyz_exp = np.array([[1, 0, 0],
@@ -121,5 +123,5 @@ def test_validation_cross_entropy():
     assert np.isclose(entropy, 0)
 
     #check no labels edge case
-    entropy2 = fitting.validation_cross_entropy(samples, [], model_params, L_max, only_even_Ls=False)
-    assert np.isclose(entropy2, np.inf), f"expected {np.inf} but recievied {entropy2}"
+    entropy = fitting.validation_cross_entropy(samples, [], model_params, L_max, only_even_Ls=False)
+    assert np.isclose(entropy, np.inf), f"expected {np.inf} but recievied {entropy}"

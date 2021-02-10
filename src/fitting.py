@@ -198,8 +198,7 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     assert data_val_xyz.shape[1] == 3
     data_val_sph = cart_to_spherical(data_val_xyz)
 
-    unique_labels = np.unique(labels)
-    unique_labels = list(range(len(model_params)))
+    unique_labels = np.unique(labels).astype(int)
 
     # make qs
     qs = []
@@ -208,13 +207,15 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
             pass
         qs.append(Y_lms_distribution(data_val_sph[:, 1], data_val_sph[:, 2],
                                                     L_max, model_params[label], only_even_Ls))
-    qs = np.array(qs).T
-    qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
+    if qs:
+        qs = np.array(qs).T
+        qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
 
     #compute cross-entropy
     flag = True
     cross_entropy = 0
     for label in unique_labels:
+        print(f"label = {label}")
         if label == -1:
             pass
         flag = False

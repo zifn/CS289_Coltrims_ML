@@ -40,15 +40,19 @@ def test_read_write_clusters():
     #write data
     dir_1 = parsing.save_clusters(labels, data, 0, 0, 0.001, dir_root, "synthetic_data")
     dir_2 = parsing.save_clusters(labels, data, 0, 0, 0.001, dir_root, "synthetic_data")
+    dir_3 = parsing.save_clusters(labels, data, 0, 0, np.inf, dir_root, "synthetic_data")
 
-    assert(dir_1 != dir_2)
+    assert dir_1 != dir_2
 
     #read_data
     data1, labels1 = parsing.read_clusters(dir_1)
     data2, labels2 = parsing.read_clusters(dir_2)
+    data3, labels3 = parsing.read_clusters(dir_3)
 
     assert np.array_equal(data1, data2)
     assert np.array_equal(labels1, labels2)
+    assert np.array_equal(data1, data3)
+    assert np.array_equal(labels1, labels3)
     assert len(labels) == len(labels1)
     assert data.shape == data1.shape
 

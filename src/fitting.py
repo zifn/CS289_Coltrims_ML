@@ -219,3 +219,6 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
         cross_entropy += -sum(np.log(class_qs[:, label]))*class_qs.shape[0]
 
     return cross_entropy
+
+def R_nl_features():
+    pass

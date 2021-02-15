@@ -1,6 +1,6 @@
-from scipy.special import sph_harm, assoc_laguerre
-import numpy as np
 from itertools import chain
+import numpy as np
+from scipy.special import sph_harm, assoc_laguerre
 
 def cart_to_spherical(M_xyz):
     """
@@ -225,38 +225,43 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
 def Psi_nlm_features(r, theta, phi, n_max, only_even_Ls=False):
     Psi_nlm_feat = []
     nlm_order = []
+    R_nl_feat = []
+    nl_order = []
     for n in range(1, n_max + 1):
-        Y_lm_feat, lm_order = Y_lm_features(theta, phi, np.max(0, n-1), only_even_Ls)
-        R_nl_feat = []
-        nl_order = []
+        print(n)
         for l in range(0, n):
-            if only_even_Ls and L%2 == 1:
+            if only_even_Ls and l%2 == 1:
                 continue
-            radial_part = assoc_laguerre(r, n-l-1, 2*l+1)
+            radial_part = np.sqrt((2/n)**3 * np.math.factorial(n-l-1)/(2*n*np.math.factorial(n+l))) * \
+                    assoc_laguerre(2*r/n, n-l-1, 2*l+1)*np.exp(-r/n)*(2*r/n)**l
             R_nl_feat.append(radial_part)
             nl_order.append((n,l))
     R_nl_feat = np.array(R_nl_feat).T
+    print(nl_order)
 
-    assert R_nl_feat.shape[0] == Y_lm_feat.shape[0]
+    #assert R_nl_feat.shape[0] == Y_lm_feat.shape[0]
     nl_counter = 0
-    lm_counter = 0
     for n_prime in range(1, n+1):
+        Y_lm_feat, lm_order = Y_lm_features(theta, phi, n_prime-1, only_even_Ls)
+        lm_counter = 0
         for l_prime in range(0, n_prime):
-            if only_even_Ls and L%2 == 1:
+            if only_even_Ls and l_prime%2 == 1:
                 continue
 
             r_feat = R_nl_feat[:,nl_counter]
             for m_prime in chain(range(0, l_prime + 1), range(-l_prime,0)):
                 y_feat = Y_lm_feat[:, lm_counter]
                 Psi_nlm_feat.append(r_feat * y_feat)
+                # print(n_prime, l_prime, m_prime, nl_order[nl_counter], lm_order[lm_counter])
                 assert (l_prime, m_prime) == lm_order[lm_counter] and (n_prime, l_prime) == nl_order[nl_counter]
                 nlm_order.append((n_prime, l_prime, n_prime))
                 lm_counter += 1
 
             nl_counter += 1
-    return Psi_nlm_feat, rlm_order
+    Psi_nlm_feat = np.array(Psi_nlm_feat).T
+    return Psi_nlm_feat, nlm_order
 
-def validation_cross_entropy_nlm(data_val_xyz, labels, model_params, L_max, only_even_Ls=False):
+def validation_cross_entropy_nlm(data_val_xyz, labels, model_params, n_max, only_even_Ls=False):
     """
     computes the cross entropy using the shpericial harmonic distribution and labeled data
     from clustering
@@ -306,10 +311,11 @@ def validation_cross_entropy_nlm(data_val_xyz, labels, model_params, L_max, only
 
 def Psi_nlms_distribution(r, theta, phi, n_max, B_nlms, only_even_Ls=False):
     feats, _ = Psi_nlm_features(r, theta, phi, n_max, only_even_Ls)
+    print(feats.shape, B_nlms.shape)
     product = feats @ B_nlms
     return abs(product)/B_nlms[0]
 
-def fit_Psi_nlms_binning_least_squares():
+def fit_Psi_nlms_binning_least_squares(M_xyz, n_max, numb_bins, only_even_Ls=False):
     assert M_xyz.shape[1] == 3
     assert numb_bins > 0 and int(numb_bins) == numb_bins
     M_sph = cart_to_spherical(M_xyz)
@@ -335,9 +341,9 @@ def fit_Psi_nlms_binning_least_squares():
     phi_hist_flat = phi_hist.flatten()
 
     # make ylm feature matrix
-    rnlm_features, nlm_order = Psi_nlm_features(r_hist_flat, theta_hist_flat, phi_hist_flat, L_max, only_even_Ls)
+    nlm_features, nlm_order = Psi_nlm_features(r_hist_flat, theta_hist_flat, phi_hist_flat, n_max, only_even_Ls)
 
     # solve for coeficients
-    B_nlms = np.linalg.solve( rnlm_features.T @ rnlm_features, rnlm_features.T @ spherical_hist_flat)
+    B_nlms = np.linalg.solve( nlm_features.T @ nlm_features, nlm_features.T @ spherical_hist_flat)
 
     return B_nlms, nlm_order

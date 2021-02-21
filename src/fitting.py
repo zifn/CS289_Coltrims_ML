@@ -222,28 +222,61 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
 
     return cross_entropy
 
-def Psi_nlm_features(r, theta, phi, n_max, only_even_Ls=False):
+def Psi_nlm_features(r, theta, phi, N_max, only_even_Ls=False):
+    """
+    Make Psi_nlm feature matrix
+
+    Parameters
+    ------------
+    r: 1D numpy array (n,)
+        array of radial magnitudes ranging from 0 to max(r) (varies depending on
+        input data). Used to generate Psi_nlm features. Must be the same size as
+        theta and phi
+    theta: 1D numpy array (n,)
+        array of theta angles ranging from 0 to 2*pi. Used to generate Psi_nlm
+        features. Must be the same size as r and phi.
+    phi: 1D numpy array (n,)
+        array of phi angles ranging from 0 to pi. Used to generate Psi_nlm features.
+        Must be the same size as theta and r.
+    n_max: int
+        maximum n (principal quantum number) value used to generate a truncated
+        array of Psi_nlm's. L will range from 0 <-> N-1, and for each L, M will
+        range from -L <-> L.
+    only_even_Ls: bool
+        if in the molecular frame, only use even L values to generate features
+
+    Returns
+    --------
+    Psi_nlm_features, nlm_order: ndarray, list of tuples
+        Psi_nlm_features is the n by m real special harmonic feature matrix for
+        each N,L,M pair allowed by N_max. nlm_order is a list of tuples where
+        each tuple is the associated (N, L, M) pair for each column in the Psi_nlm
+        feature matrix. n is the number of (r, theta, phi) pairs (input points)
+        while m is the number of (N, L,M) pairs,
+        $\sum_{N=1}^{N_{max}}\sum_{L=0}^{N-1} 2L + 1$.
+    """
+    assert len(r) == len(theta) == len(phi)
+
     Psi_nlm_feat = []
     nlm_order = []
     R_nl_feat = []
     nl_order = []
-    for n in range(1, n_max + 1):
-        print(n)
-        for l in range(0, n):
-            if only_even_Ls and l%2 == 1:
+    # Generate R_nl feature
+    for N in range(1, N_max + 1):   # Loop between 1 and N
+        for L in range(0, N):
+            if only_even_Ls and L%2 == 1:
                 continue
-            radial_part = np.sqrt((2/n)**3 * np.math.factorial(n-l-1)/(2*n*np.math.factorial(n+l))) * \
-                    assoc_laguerre(2*r/n, n-l-1, 2*l+1)*np.exp(-r/n)*(2*r/n)**l
+            radial_part = np.sqrt((2/N)**3 * np.math.factorial(N-L-1)/(2*N*np.math.factorial(N+L))) * \
+                    assoc_laguerre(2*r/N, N-L-1, 2*L+1)*np.exp(-r/N)*(2*r/N)**L
             R_nl_feat.append(radial_part)
-            nl_order.append((n,l))
+            nl_order.append((N,L))
     R_nl_feat = np.array(R_nl_feat).T
-    print(nl_order)
+    assert R_nl_feat.shape[0] == len(r)
 
-    #assert R_nl_feat.shape[0] == Y_lm_feat.shape[0]
-    nl_counter = 0
-    for n_prime in range(1, n+1):
+    nl_counter = 0      # How many NL pairs have we used thus far.
+    for n_prime in range(1, N_max+1):
         Y_lm_feat, lm_order = Y_lm_features(theta, phi, n_prime-1, only_even_Ls)
-        lm_counter = 0
+        lm_counter = 0  # How many LM pairs have we used thus far.
         for l_prime in range(0, n_prime):
             if only_even_Ls and l_prime%2 == 1:
                 continue
@@ -252,74 +285,73 @@ def Psi_nlm_features(r, theta, phi, n_max, only_even_Ls=False):
             for m_prime in chain(range(0, l_prime + 1), range(-l_prime,0)):
                 y_feat = Y_lm_feat[:, lm_counter]
                 Psi_nlm_feat.append(r_feat * y_feat)
-                # print(n_prime, l_prime, m_prime, nl_order[nl_counter], lm_order[lm_counter])
                 assert (l_prime, m_prime) == lm_order[lm_counter] and (n_prime, l_prime) == nl_order[nl_counter]
                 nlm_order.append((n_prime, l_prime, n_prime))
                 lm_counter += 1
 
             nl_counter += 1
     Psi_nlm_feat = np.array(Psi_nlm_feat).T
+    assert Psi_nlm_feat.shape[0] == len(r)
     return Psi_nlm_feat, nlm_order
 
-def validation_cross_entropy_nlm(data_val_xyz, labels, model_params, n_max, only_even_Ls=False):
+def Psi_nlms_distribution(r, theta, phi, n_max, B_nlms, only_even_Ls=False):
     """
-    computes the cross entropy using the shpericial harmonic distribution and labeled data
-    from clustering
+    Computes the probability density given a set of rs, thetas, and phis to be
+    sampled, an N_max to generate features, and the associated array of coeficients.
 
     Parameters
     ------------
-    data_val_xyz: array Nx3
-        Validation data used to compute the cross entropy of the clasification
-    labels: array of ints
-        Each entry varries from 0 to (number classes - 1). Used to reference the model params.
-    params: list of arrays
-        Each entry is a list of arrays representing the B_lms for an individual model
-    L_max: int
-        maximum L value used to generate a truncated array of Y_lms
+    r: 1D numpy array (n,)
+        array of radial magnitudes ranging from 0 to max(r) (varies depending on
+        input data). Used to generate Psi_nlm features. Must be the same size as
+        theta and phi
+    theta: 1D numpy array (n,)
+        array of theta angles ranging from 0 to 2*pi. Used to generate Psi_nlm
+        features. Must be the same size as r and phi.
+    phi: 1D numpy array (n,)
+        array of phi angles ranging from 0 to pi. Used to generate Psi_nlm features.
+        Must be the same size as theta and r.
+    N_max: int
+        maximum N value used to generate a truncated array of Psi_nlm's
+    B_nlms: 1d numpy array
+        1d array of coeficients associated with a given real Psi_nlm's
     only_even_Ls: bool
         if in the molecular frame, only use even L values to generate features
 
     Returns
     --------
-    cross_entropy: float
-        the cross entropy given labeled validation data
+    float
+        probability density scaled by the B_000 coeficient
     """
-    assert data_val_xyz.shape[1] == 3
-    data_val_sph = cart_to_spherical(data_val_xyz)
-
-    unique_labels = np.unique(labels)
-    assert  set(list(unique_labels)).issubset(set(range(len(model_params))))
-    assert unique_labels.shape[0] == len(model_params) or unique_labels.shape[0] == len(model_params) + 1, \
-                f"unique_labels.shape = {unique_labels.shape} and len(model_params) = {len(model_params)}"
-    unique_labels = list(range(len(model_params)))
-
-    # make qs
-    qs = []
-    for label in unique_labels:
-        qs.append(Psi_nlms_distribution(data_val_sph[:,0], data_val_sph[:, 1], data_val_sph[:, 2],
-                                                    n_max, model_params[label], only_even_Ls))
-    qs = np.array(qs).T
-    qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
-
-    #compute cross-entropy
-    cross_entropy = 0
-    for label in unique_labels:
-        class_qs = qs[labels == label]
-        cross_entropy += -sum(np.log(class_qs[:, label]))*class_qs.shape[0]
-
-    return cross_entropy
-
-def Psi_nlms_distribution(r, theta, phi, n_max, B_nlms, only_even_Ls=False):
     feats, _ = Psi_nlm_features(r, theta, phi, n_max, only_even_Ls)
-    print(feats.shape, B_nlms.shape)
     product = feats @ B_nlms
     return abs(product)/B_nlms[0]
 
-def fit_Psi_nlms_binning_least_squares(M_xyz, n_max, numb_bins, only_even_Ls=False):
+def fit_Psi_nlms_binning_least_squares(M_xyz, N_max, numb_bins, only_even_Ls=False):
+    """
+    Least Squares Fitting to get B_nlm coeficients
+
+    Parameters
+    ------------
+    M_xyz: n by 3 numpy array
+        observered data points representing the distribution in cartesian coordiantes
+    N_max: int
+        Maximum value of N quantum number determing the number of terms to be used in the fits
+    numb_bins: int
+        number of bins in r, theta, and phi axes
+
+    Returns
+    --------
+    B_nlms: 1d array
+        optimized B_nlm coeficients used for the probability distribution
+    nlm_order: list of tuples
+        first index of each tuple is N, second is L, final is M.
+    """
     assert M_xyz.shape[1] == 3
     assert numb_bins > 0 and int(numb_bins) == numb_bins
     M_sph = cart_to_spherical(M_xyz)
 
+    # Range in r is from 0 to max(r), so the size of each bin depends on the inputed data.
     spherical_hist, bin_edges = np.histogramdd((M_sph[:,0], M_sph[:, 1], M_sph[:, 2]), numb_bins,
                                                     range=[None, [0, 2*np.pi], [0, np.pi]],
                                                     density=True)
@@ -341,9 +373,57 @@ def fit_Psi_nlms_binning_least_squares(M_xyz, n_max, numb_bins, only_even_Ls=Fal
     phi_hist_flat = phi_hist.flatten()
 
     # make ylm feature matrix
-    nlm_features, nlm_order = Psi_nlm_features(r_hist_flat, theta_hist_flat, phi_hist_flat, n_max, only_even_Ls)
+    nlm_features, nlm_order = Psi_nlm_features(r_hist_flat, theta_hist_flat, phi_hist_flat, N_max, only_even_Ls)
 
     # solve for coeficients
     B_nlms = np.linalg.solve( nlm_features.T @ nlm_features, nlm_features.T @ spherical_hist_flat)
 
     return B_nlms, nlm_order
+
+def validation_cross_entropy_nlm(data_val_xyz, labels, model_params, N_max, only_even_Ls=False):
+    """
+    computes the cross entropy using the sphericial harmonic distribution and labeled data
+    from clustering
+
+    Parameters
+    ------------
+    data_val_xyz: array Nx3
+        Validation data used to compute the cross entropy of the clasification
+    labels: array of ints
+        Each entry varries from 0 to (number classes - 1). Used to reference the model params.
+    params: list of arrays
+        Each entry is a list of arrays representing the B_lms for an individual model
+    N_max: int
+        maximum N value used to generate a truncated array of Y_lms
+    only_even_Ls: bool
+        if in the molecular frame, only use even L values to generate features
+
+    Returns
+    --------
+    cross_entropy: float
+        the cross entropy given labeled validation data
+    """
+    assert data_val_xyz.shape[1] == 3
+    data_val_sph = cart_to_spherical(data_val_xyz)
+
+    unique_labels = np.unique(labels)
+    assert  set(list(unique_labels)).issubset(set(range(len(model_params))))
+    assert unique_labels.shape[0] == len(model_params) or unique_labels.shape[0] == len(model_params) + 1, \
+                f"unique_labels.shape = {unique_labels.shape} and len(model_params) = {len(model_params)}"
+    unique_labels = list(range(len(model_params)))
+
+    # make qs
+    qs = []
+    for label in unique_labels:
+        qs.append(Psi_nlms_distribution(data_val_sph[:,0], data_val_sph[:, 1], data_val_sph[:, 2],
+                                                    N_max, model_params[label], only_even_Ls))
+    qs = np.array(qs).T
+    qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
+
+    #compute cross-entropy
+    cross_entropy = 0
+    for label in unique_labels:
+        class_qs = qs[labels == label]
+        cross_entropy += -sum(np.log(class_qs[:, label]))*class_qs.shape[0]
+
+    return cross_entropy

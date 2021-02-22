@@ -136,7 +136,7 @@ def generate_synthetic_data(k, num_particles, points_per_cluster):
     cluster_radii = np.random.uniform(-10, 10, size=(k, num_particles))
 
     dataset = []
-
+    dataset_labels = []
     for i in range(k):
         phis = np.random.normal(cluster_angles[i, :, 0],
                                               scale=np.pi/16,
@@ -154,8 +154,8 @@ def generate_synthetic_data(k, num_particles, points_per_cluster):
 
         ps = np.hstack([x, y, z])
         ps = ps[:, np.array([(i, num_particles + i, 2*num_particles + i) for i in range(num_particles)]).flatten()]
-
+        dataset_labels += [i]*points_per_cluster
         dataset.append(ps)
 
     dataset = np.vstack(dataset)
-    return dataset
+    return dataset, dataset_labels

@@ -2,8 +2,8 @@
 # CS289A - COLTRIMS ML
 
 ## RIMS - Group
-Project Title: Classification of Molecular States in COLTRIMS Scattering Experiments
-Group Members: Richard Thurston, Larry Chen, Sajant Anand
+Project Title: Classification of Molecular States in COLTRIMS Scattering Experiments  
+Group Members: Richard Thurston, Larry Chen, Sajant Anand  
 Assignment: Project Family F, CS289A, UC Berkeley Fall 2020
 
 ## Summary

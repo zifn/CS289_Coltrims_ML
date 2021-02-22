@@ -11,7 +11,6 @@ def test_cart_spherical_conversions():
     cardinal directions and if cart_to_spherical() and spherical_to_cart() are inverses
     if each other
     """
-    print(np.__version__)
     rng = np.random.default_rng()
 
     M_xyz_exp = np.array([[1, 0, 0],

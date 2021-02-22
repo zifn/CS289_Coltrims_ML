@@ -198,24 +198,30 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     assert data_val_xyz.shape[1] == 3
     data_val_sph = cart_to_spherical(data_val_xyz)
 
-    unique_labels = np.unique(labels)
-    assert  set(list(unique_labels)).issubset(set(range(len(model_params))))
-    assert unique_labels.shape[0] == len(model_params) or unique_labels.shape[0] == len(model_params) + 1, \
-                f"unique_labels.shape = {unique_labels.shape} and len(model_params) = {len(model_params)}"
-    unique_labels = list(range(len(model_params)))
+    unique_labels = np.unique(labels).astype(int)
 
     # make qs
     qs = []
     for label in unique_labels:
+        if label == -1:
+            pass
         qs.append(Y_lms_distribution(data_val_sph[:, 1], data_val_sph[:, 2],
                                                     L_max, model_params[label], only_even_Ls))
-    qs = np.array(qs).T
-    qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
+    if qs:
+        qs = np.array(qs).T
+        qs /= qs.sum(axis=1)[:, None] # normalization of probability density to probabilities of each class
 
     #compute cross-entropy
+    flag = True
     cross_entropy = 0
     for label in unique_labels:
+        print(f"label = {label}")
+        if label == -1:
+            pass
+        flag = False
         class_qs = qs[labels == label]
         cross_entropy += -sum(np.log(class_qs[:, label]))*class_qs.shape[0]
 
+    if flag: # No entropies were computed
+        return np.inf
     return cross_entropy

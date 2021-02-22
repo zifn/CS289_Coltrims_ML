@@ -50,13 +50,15 @@ def k_means_clustering(data, num_clusters, num_iter=300, num_init=10, tol=1.e-4)
     if result.n_iter_ == num_iter:
         warnings.warn('Warning: k-means may not have converged.')
 
+    labels = np.array(result.labels_)
+
     num_outliers = np.sum(result.labels_ == -1)
     num_clusters = np.max(result.labels_) + 1
     cluster_centers = []
     for i in range(num_clusters):
-        cluster_centers.append(np.mean(data[result.labels_ == i, :], axis=0))
+        cluster_centers.append(np.mean(data[labels == i, :], axis=0))
 
-    print('Number of clusters found: ', num_clusters)
+    print('Number of clusters found: ', len(np.unique(labels)))
     print('Number of points not assigned cluster: ', num_outliers)
 
     return np.array(result.labels_), np.array(cluster_centers)

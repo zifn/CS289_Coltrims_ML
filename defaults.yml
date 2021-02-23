@@ -5,6 +5,7 @@ clusters_step: 1
 bins_min: 50
 bins_max: 90
 bins_step: 10
-L: 6
+radial: False
+Q: 6
 save_dir: results
 viz_kwargs: {}

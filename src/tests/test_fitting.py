@@ -1,7 +1,5 @@
-from itertools import product
-
+from itertools import product, chain
 import numpy as np
-
 
 from .. import fitting
 
@@ -54,9 +52,7 @@ def test_fit_Y_lms_va_binning():
             for L in range(0, L_max + 1):
                 if  evens and L%2 == 1:
                     continue
-                for _ in range(L+1):
-                    sample_B_lms.append(rng.normal())
-                for _ in range(-L, 0):
+                for _ in chain(range(L+1), range(-L,0)):
                     sample_B_lms.append(rng.normal())
             sample_B_lms[0] = 3
             if not rand_dist:
@@ -88,6 +84,57 @@ def test_fit_Y_lms_va_binning():
             assert np.all(est_probs >= 0)
             assert np.mean((est_probs - angles_probs)**2) < 10**-8
 
+def test_fit_R_nlms_va_binning():
+    rng = np.random.default_rng()
+    r = np.linspace(0.1,5,5)
+    theta = np.linspace(0, 2*np.pi, 51)
+    phi = np.linspace(0, np.pi, 51)
+    vectors = list(product(r, theta, phi))
+    vectors_array = np.array(vectors)
+
+    # all L values
+    for N_max, evens, rand_dist in [(1, False, False), (2, True, False), (3, False, True), (2, True, True)]:
+        for trial in range(1):
+            # make some random B_lms
+            sample_B_nlms = []
+            for n in range(1, N_max+1):
+                for L in range(0, n):
+                    if  evens and L%2 == 1:
+                        continue
+                    for _ in chain(range(L+1), range(-L,0)):
+                        sample_B_nlms.append(rng.normal())
+            sample_B_nlms[0] = 3
+            if not rand_dist: # Not random distribution. Instead use nlm = 100
+                sample_B_nlms = len(sample_B_nlms)*[0]
+                sample_B_nlms[0] = 1
+            sample_B_nlms = np.array(sample_B_nlms)
+
+            # get probabilities from B_nlms
+            vectors_probs = fitting.Psi_nlms_distribution(vectors_array[:,0], vectors_array[:,1], vectors_array[:,2],
+                                                          N_max, sample_B_nlms, evens)
+            vectors_probs = abs(vectors_probs)
+            vectors_probs /= sum(vectors_probs)
+
+            # get samples
+            vectors_indicies = np.arange(0, vectors_array.shape[0], 1)
+            samples_indicies = rng.choice(vectors_indicies, size=10000, replace=True, p=vectors_probs)
+            samples_vectors = vectors_array[samples_indicies]
+            #samples_sph = np.hstack((np.ones([samples_angles.shape[0], 1]), samples_angles))
+            samples_xyz = fitting.spherical_to_cart(samples_vectors)
+
+            # run least squares and get probability estimates
+            print("------------------\nrunning least squares trial = ", trial)
+            estimate_B_nlms, _ = fitting.fit_Psi_nlms_binning_least_squares(samples_xyz, N_max, 100, evens)
+            est_probs = fitting.Psi_nlms_distribution(vectors_array[:,0], vectors_array[:,1], vectors_array[:,2],
+                                                      N_max, estimate_B_nlms, evens)
+            est_probs /= sum(est_probs)
+            print(f"\nnormed estimate_B_nlms:\n{estimate_B_nlms/estimate_B_nlms[0]}")
+            print(f"normed sample_B_nlms:\n{sample_B_nlms/sample_B_nlms[0]}")
+
+            print("MSE of probs after opt = ", np.mean((est_probs - vectors_probs)**2))
+            assert np.all(est_probs >= 0)
+            assert np.mean((est_probs - vectors_probs)**2) < 10**-8
+
 def test_validation_cross_entropy():
     """
     simple test of cross entropy function
@@ -98,9 +145,7 @@ def test_validation_cross_entropy():
     L_max = 3
 
     for L in range(0, L_max + 1):
-        for _ in range(L+1):
-            sample_B_lms.append(0)
-        for _ in range(-L, 0):
+        for _ in chain(range(L+1), range(-L,0)):
             sample_B_lms.append(0)
     sample_B_lms[0] = 1
     sample_B_lms = np.array(sample_B_lms)
@@ -123,4 +168,40 @@ def test_validation_cross_entropy():
 
     #check no labels edge case
     entropy = fitting.validation_cross_entropy(samples, [], model_params, L_max, only_even_Ls=False)
+    assert np.isclose(entropy, np.inf), f"expected {np.inf} but recievied {entropy}"
+
+def test_validation_cross_entropy_nlm():
+    """
+    simple test of cross entropy function
+    """
+    # make uniform B_lms
+    sample_B_nlms = []
+    N_valid = 100
+    N_max = 3
+    for n in range(1, N_max+1):
+        for L in range(0, n):
+            for _ in chain(range(L+1), range(-L,0)):
+                sample_B_nlms.append(0)
+    sample_B_nlms[0] = 1
+    sample_B_nlms = np.array(sample_B_nlms)
+
+    # sample points
+    rng = np.random.default_rng()
+    r = np.linspace(0, 5, 2002)     # Max radius is 5.
+    r = r[1:]                       # Do not allow radius of 0.
+    theta = np.linspace(0, 2*np.pi, 2001)
+    phi = np.linspace(0, np.pi, 2001)
+
+    samples = np.array([rng.choice(r, size=N_valid, replace=True),
+                                    rng.choice(theta, size=N_valid, replace=True),
+                                    rng.choice(phi, size=N_valid, replace=True)]).T
+    samples = fitting.spherical_to_cart(samples)
+    labels = np.zeros(N_valid)
+    model_params = [sample_B_nlms]
+
+    entropy = fitting.validation_cross_entropy_nlm(samples, labels, model_params, N_max, only_even_Ls=False)
+    assert np.isclose(entropy, 0)
+
+    #check no labels edge case
+    entropy = fitting.validation_cross_entropy_nlm(samples, [], model_params, N_max, only_even_Ls=False)
     assert np.isclose(entropy, np.inf), f"expected {np.inf} but recievied {entropy}"

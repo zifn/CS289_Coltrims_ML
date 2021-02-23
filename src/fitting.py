@@ -217,7 +217,7 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     flag = True
     cross_entropy = 0
     for label in unique_labels:
-        print(f"label = {label}")
+        #print(f"label = {label}")          # I am not sure why this print statement is here.
         if label == -1:
             pass
         flag = False
@@ -440,7 +440,7 @@ def validation_cross_entropy_nlm(data_val_xyz, labels, model_params, N_max, only
     flag = True
     cross_entropy = 0
     for label in unique_labels:
-        print(f"label = {label}")
+        # print(f"label = {label}")     # I'm not sure why this print station is here.
         if label == -1:
             pass
         flag = False

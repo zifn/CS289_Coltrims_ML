@@ -37,9 +37,9 @@ def visualize_clusters(directory, bins=None, plot_kwargs={}, save_kwargs={'dpi':
     fig.savefig(os.path.join(directory, 'electron-energy-vs-ion_energy-difference.png'), **save_kwargs)
     plt.close(fig)
 
-def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, cluster_range, radial, Q_max, num_bins, save_dir='.'):
+def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, cluster_range, radial, Q_max, only_even_Ls, num_bins, save_dir='.'):
     if radial:
-        fitting_function = fitting.fit_Psi_lms_binning_least_squares
+        fitting_function = fitting.fit_Psi_nlms_binning_least_squares
         entropy_function = fitting.validation_cross_entropy_nlm
     else:
         fitting_function = fitting.fit_Y_lms_binning_least_squares
@@ -72,10 +72,10 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
             B_fits, lm_order = fitting_function(
                 electron_data[i], Q_max,
                 num_bins,
-                only_even_Ls=False
+                only_even_Ls=only_even_Ls
             )
             Bs.append(B_fits)
-        entropy = entropy_function(val_elec_data, val_elec_labels, Bs, Q_max, only_even_Ls=False)
+        entropy = entropy_function(val_elec_data, val_elec_labels, Bs, Q_max, only_even_Ls=only_even_Ls)
         parameters.append((N, entropy))
 
         directory = parsing.save_clusters(labels, data, Q_max, num_bins, entropy, root_dir=save_dir, method="kmeans-molecular-frame")
@@ -93,9 +93,9 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
         np.savetxt(file_path, np.array(parameters), delimiter=',', header="k,cross_entropy", comments='')
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
-def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, radial, Q_max, bin_range, save_dir=None):
+def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, radial, Q_max, only_even_Ls, bin_range, save_dir=None):
     if radial:
-        fitting_function = fitting.fit_Psi_lms_binning_least_squares
+        fitting_function = fitting.fit_Psi_nlms_binning_least_squares
         entropy_function = fitting.validation_cross_entropy_nlm
         Q_min = 1       # N must be > 0
         print('N_max: ', Q_max)
@@ -132,11 +132,11 @@ def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, t
                 B_fits, _ = fitting_function(
                     electron_data[i], Q,
                     num_bins,
-                    only_even_Ls=False
+                    only_even_Ls=only_even_Ls
                 )
                 if not any(np.isnan(B_fits)):
                     Bs.append(B_fits)
-            entropy = entropy_function(val_elec_data, val_elec_labels, B_fits, Q, only_even_Ls=False)
+            entropy = entropy_function(val_elec_data, val_elec_labels, Bs, Q, only_even_Ls=only_even_Ls)
             parameters.append((Q, num_bins, entropy))
 
     entropies = np.array(parameters)[:,2]
@@ -149,7 +149,7 @@ def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, t
         np.savetxt(file_path, np.array(parameters), delimiter=',', header="Q,num_bins,cross_entropy", comments='')
     return optimal_parameters
 
-def optimal_optics_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, radial, max_Q_to_try, bins_to_try, save_dir='.'):
+def optimal_optics_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, radial, max_Q_to_try, only_even_Ls, bins_to_try, save_dir='.'):
 
     min_samp_list = 10**np.arange(1, 7, 1)
     max_eps_array = 10.0**np.arange(5, 100, 10)
@@ -171,7 +171,7 @@ def optimal_optics_hyperparameters(phi, data, train_data, val_data, train_indice
         num_clusters = len(np.unique(labels))
 
 
-        Q_max, num_bins, entropy = optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, radial, max_Q_to_try, bins_to_try, save_dir=None)
+        Q_max, num_bins, entropy = optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, radial, max_Q_to_try, only_even_Ls, bins_to_try, save_dir=None)
         parameters.append((i, num_clusters, entropy, Q_max, num_bins, min_samp, max_eps))
 
         temp_dir = os.path.join(save_dir, f"optics_params_{i}")
@@ -198,7 +198,7 @@ def optimal_optics_hyperparameters(phi, data, train_data, val_data, train_indice
     plt.close()
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
-def long_optimal_kmeans_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, radial, max_Q_to_try, bins_to_try, cluster_range, save_dir='.'):
+def long_optimal_kmeans_hyperparameters(phi, data, train_data, val_data, train_indices, val_indices, radial, max_Q_to_try, only_even_Ls, bins_to_try, cluster_range, save_dir='.'):
 
     min_samp_list = 10**np.arange(1, 7, 1)
     max_eps_array = 10.0**np.arange(5, 100, 10)
@@ -219,7 +219,7 @@ def long_optimal_kmeans_hyperparameters(phi, data, train_data, val_data, train_i
         num_clusters = len(np.unique(labels))
 
 
-        Q_max, num_bins, entropy = optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, radial, max_Q_to_try, bins_to_try, save_dir=None)
+        Q_max, num_bins, entropy = optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, radial, max_Q_to_try, only_even_Ls, bins_to_try, save_dir=None)
         parameters.append((i, num_clusters, entropy, Q_max, num_bins, N))
 
         temp_dir = os.path.join(save_dir, "kmeans_params_" + f"{i}")
@@ -249,7 +249,7 @@ def long_optimal_kmeans_hyperparameters(phi, data, train_data, val_data, train_i
     plt.close()
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
-def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, radial_fitting, max_Q_to_try, save_dir='.', viz_kwargs={}):
+def analyze(filename, num_points, initial_clusters, clusters_to_try, bins_to_try, radial_fitting, max_Q_to_try, only_even_Ls, save_dir='.', viz_kwargs={}):
     """
     # PREPROCESSING
     # 1. Split data into training, validation, and testing splits of 70%, 15%, 15%.
@@ -270,10 +270,12 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, radial_fit
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
 
-    fitting_type = 'spherical' if radial else 'angular'     # Incorporate this label into savefile names to keep track of N vs L fitting.
+    fitting_type = 'spherical' if radial_fitting else 'angular'     # Incorporate this label into savefile names to keep track of N vs L fitting.
 
     #read and preprocess data
     data = parsing.read_momentum(filename)
+    if num_points:
+        data = data[:num_points, :]
     data = preprocess.molecular_frame(data[:, :])
     print(f"Data read from file {filename} has shape {str(data.shape)}.")
     phi = preprocess.generate_feature_matrix(data)
@@ -299,24 +301,27 @@ def analyze(filename, initial_clusters, clusters_to_try, bins_to_try, radial_fit
     if False: #fast optimal k_means_clustering
         k5_labels, _ = clustering.k_means_clustering(phi, num_clusters=initial_clusters)
 
-        Q_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, radial_fitting, max_Q_to_try, bins_to_try, save_dir)
+        Q_max, num_bins, _ = optimal_angular_distribution_hyperparameters(train_data, val_data, k5_labels, train_indices, val_indices, radial_fitting, max_Q_to_try, only_even_Ls, bins_to_try, save_dir)
 
-        num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, Q_max, num_bins, save_dir)
+        num, entropy, k_labels = optimal_k_means_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, clusters_to_try, Q_max, only_even_Ls, num_bins, save_dir)
 
         directory = parsing.save_clusters(k_labels, data, Q_max, num_bins, entropy, root_dir=save_dir, method="kmeans-molecular-frame")
         visualize_clusters(directory, **viz_kwargs)
     elif False: #optics clustering
-         num, entropy, k_labels = optimal_optics_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, radial_fitting, max_Q_to_try, bins_to_try, save_dir)
+         num, entropy, k_labels = optimal_optics_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, radial_fitting, max_Q_to_try, only_even_Ls, bins_to_try, save_dir)
     elif True: #long optimal k_means_clustering
-         num, entropy, k_labels = long_optimal_kmeans_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, radial_fitting, max_Q_to_try, bins_to_try, clusters_to_try, save_dir)
+         num, entropy, k_labels = long_optimal_kmeans_hyperparameters(phi, data, train_data, test_data, train_indices, test_indices, radial_fitting, max_Q_to_try, only_even_Ls, bins_to_try, clusters_to_try, save_dir)
 
 if __name__ == '__main__':
     parser = ArgumentParser(
         description='Analyze a COLTRIMS dataset.',
         add_help=True
     )
+
     parser.add_argument('datafile', help='Path to the COLTRIMS datafile.')
     parser.add_argument('-c', '--config', help='Path to configuration file.', default='defaults.yml')
+
+    parser.add_argument('--num_points', '-num', default=0, help='The number of points from the dataset to use; use this to make testing analysis faster.')
 
     parser.add_argument('--cinit', dest='clusters_init', help='The initial number of clusters to use.')
     parser.add_argument('--cmin', dest='clusters_min', help='The minimum cluster size.')
@@ -329,6 +334,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--radial', dest='radial_fitting', action='store_true', help='Flag of whether to fit using radial data. If False, only fit using angular components (theta, phi); If True, also use radial data (r) to fit.' )
     parser.add_argument('--quantum_number', '-Q', dest='Q', help='The largest Nmax/Lmax to try; type of depends on whether "radial" flag is set.')
+    parser.add_argument('--only_even_Ls', dest='only_even_Ls', action='store_true', help='Flag of whether to consider all L values or only even ones; if we convert to the molecular frame, we expect only even Ls.')
 
     parser.add_argument('-s', '--save', dest='save_dir', help='Directory to save results to.')
 
@@ -342,6 +348,7 @@ if __name__ == '__main__':
 
     analyze(
         args.datafile,
+        num_points=cfg['num_points'],
         initial_clusters=cfg['clusters_init'],
         clusters_to_try=np.arange(
             cfg['clusters_min'], cfg['clusters_max'] + 1, cfg['clusters_step']
@@ -350,7 +357,8 @@ if __name__ == '__main__':
             cfg['bins_min'], cfg['bins_max'] + 1, cfg['bins_step']
         ),
         radial_fitting=cfg['radial'],
-        max_L_to_try=cfg['Q'],
+        max_Q_to_try=cfg['Q'],
+        only_even_Ls=cfg['only_even_Ls'],
         save_dir=cfg['save_dir'],
         viz_kwargs=cfg['viz_kwargs']
     )

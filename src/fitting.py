@@ -215,7 +215,7 @@ def validation_cross_entropy(data_val_xyz, labels, model_params, L_max, only_eve
     flag = True
     cross_entropy = 0
     for label in unique_labels:
-        print(f"label = {label}")
+        #print(f"label = {label}")
         if label == -1:
             pass
         flag = False

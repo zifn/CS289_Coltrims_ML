@@ -86,7 +86,7 @@ def optimal_k_means_hyperparameters(phi, data, train_data, val_data, train_indic
     np.savetxt(file_path, np.array(parameters), delimiter=',', header="k,cross_entropy", comments='')
     return optimal_parameters[0], optimal_parameters[1], k_labels[optimal_index]
 
-def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, L_max, bin_range, save_dir=None):
+def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, train_indices, val_indices, L_max, bin_range, method_name, save_dir=None):
     print('L_max: ', L_max)
     print('Range of bin values to consider: ', bin_range)
 
@@ -130,7 +130,7 @@ def optimal_angular_distribution_hyperparameters(train_data, val_data, labels, t
     print("optimal_parameters = ", optimal_parameters)
     
     if save_dir != None:
-        file_path = os.path.join(save_dir, "kmeans-molecular-frame_optimal_parameters.csv")
+        file_path = os.path.join(save_dir, method_name + "-molecular-frame_optimal_parameters.csv")
         np.savetxt(file_path, np.array(parameters), delimiter=',', header="L,num_bins,cross_entropy", comments='')
     return optimal_parameters
 
